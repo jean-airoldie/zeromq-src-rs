@@ -1,0 +1,18 @@
+[package]
+name = "zeromq-src"
+version = "0.1.0"
+authors = ["jean-airoldie <maxence.caron@protonmail.com>"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+description = """
+Source code and logic to build ZeroMQ from source
+"""
+repository = "https://github.com/jean-airoldie/zeromq-src-rs"
+readme = "README.md"
+keywords = ["libzmq", "zmq", "zeromq"]
+
+[workspace]
+members = ["testcrate"]
+
+[dependencies]
+cmake = "0.1"
