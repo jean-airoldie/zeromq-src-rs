@@ -2,6 +2,7 @@ use cmake::Config;
 
 use std::{
     fmt,
+    fs::read_dir,
     path::{Path, PathBuf},
 };
 
@@ -101,20 +102,20 @@ impl Build {
     }
 
     /// Build & link statically instead of dynamically.
-    pub fn link_static(&mut self) -> &mut Self {
-        self.link_static = true;
+    pub fn link_static(&mut self, enabled: bool) -> &mut Self {
+        self.link_static = enabled;
         self
     }
 
     /// Build the debug version of the lib.
-    pub fn build_debug(&mut self) -> &mut Self {
-        self.build_debug = true;
+    pub fn build_debug(&mut self, enabled: bool) -> &mut Self {
+        self.build_debug = enabled;
         self
     }
 
     /// Enable the DRAFT API.
-    pub fn enable_draft(&mut self) -> &mut Self {
-        self.enable_draft = true;
+    pub fn enable_draft(&mut self, enabled: bool) -> &mut Self {
+        self.enable_draft = enabled;
         self
     }
 
@@ -163,7 +164,16 @@ impl Build {
 
         let dest = config.build();
 
-        let lib_path = "lib64";
+        // Find the system dependant lib directory.
+        let lib_path = {
+            if read_dir(dest.join("lib")).is_ok() {
+                "lib"
+            } else if read_dir(dest.join("lib64")).is_ok() {
+                "lib64"
+            } else {
+                panic!("cannot find lib directory")
+            }
+        };
 
         let lib_dir = dest.join(lib_path);
         let include_dir = dest.join("include");
