@@ -110,7 +110,7 @@ impl Build {
         self
     }
 
-    pub fn draft(&mut self, cond: bool) -> &mut Self {
+    pub fn enable_draft(&mut self, cond: bool) -> &mut Self {
         self.enable_draft = cond;
         self
     }
