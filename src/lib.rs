@@ -87,31 +87,34 @@ impl Lib {
 #[derive(Debug, Clone)]
 pub struct Build {
     enable_draft: bool,
-    build_type: BuildType,
-    link_type: LinkType,
+    build_debug: bool,
+    link_static: bool,
 }
 
 impl Build {
     pub fn new() -> Self {
         Self {
             enable_draft: false,
-            link_type: LinkType::Dynamic,
-            build_type: BuildType::Release,
+            build_debug: false,
+            link_static: false,
         }
     }
 
-    pub fn build_type(&mut self, build_type: BuildType) -> &mut Self {
-        self.build_type = build_type;
+    /// Build & link statically instead of dynamically.
+    pub fn link_static(&mut self) -> &mut Self {
+        self.link_static = true;
         self
     }
 
-    pub fn link_type(&mut self, link_type: LinkType) -> &mut Self {
-        self.link_type = link_type;
+    /// Build the debug version of the lib.
+    pub fn build_debug(&mut self) -> &mut Self {
+        self.build_debug = true;
         self
     }
 
-    pub fn enable_draft(&mut self, cond: bool) -> &mut Self {
-        self.enable_draft = cond;
+    /// Enable the DRAFT API.
+    pub fn enable_draft(&mut self) -> &mut Self {
+        self.enable_draft = true;
         self
     }
 
@@ -124,30 +127,39 @@ impl Build {
             config.define("ENABLE_DRAFTS", "OFF");
         }
 
-        match self.build_type {
-            BuildType::Release => config.define("CMAKE_BUILD_TYPE", "Release"),
-            BuildType::Debug => config.define("CMAKE_BUILD_TYPE", "Debug"),
-        };
+        if self.build_debug {
+            config.define("CMAKE_BUILD_TYPE", "Debug");
+        } else {
+            config.define("CMAKE_BUILD_TYPE", "Release");
+        }
 
         let mut libs = vec![];
 
-        libs.push(Lib {
-            link_type: Some(self.link_type),
-            name: "zmq".to_owned(),
-        });
         libs.push(Lib {
             link_type: None,
             name: "stdc++".to_owned(),
         });
 
-        match self.link_type {
-            LinkType::Static => config
-                .define("BUILD_SHARED", "ON")
-                .define("BUILD_STATIC", "OFF"),
-            LinkType::Dynamic => config
-                .define("BUILD_SHARED", "OFF")
-                .define("BUILD_STATIC", "ON"),
+        let link_type = {
+            if self.link_static {
+                config
+                    .define("BUILD_SHARED", "OFF")
+                    .define("BUILD_STATIC", "ON");
+
+                LinkType::Static
+            } else {
+                config
+                    .define("BUILD_SHARED", "ON")
+                    .define("BUILD_STATIC", "OFF");
+
+                LinkType::Dynamic
+            }
         };
+
+        libs.push(Lib {
+            link_type: Some(link_type),
+            name: "zmq".to_owned(),
+        });
 
         let dest = config.build();
 
