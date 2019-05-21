@@ -10,6 +10,8 @@ Source code and logic to build ZeroMQ from source
 repository = "https://github.com/jean-airoldie/zeromq-src-rs"
 readme = "README.md"
 keywords = ["libzmq", "zmq", "zeromq"]
+# Prevent publishing the master branch
+publish = false
 
 [workspace]
 members = ["testcrate"]
