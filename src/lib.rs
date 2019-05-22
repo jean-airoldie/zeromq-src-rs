@@ -4,6 +4,7 @@ use std::{
     fmt,
     fs::read_dir,
     path::{Path, PathBuf},
+    env,
 };
 
 pub fn source_dir() -> PathBuf {
@@ -90,6 +91,7 @@ pub struct Build {
     enable_draft: bool,
     build_debug: bool,
     link_static: bool,
+    perf_tool: bool
 }
 
 impl Build {
@@ -98,6 +100,7 @@ impl Build {
             enable_draft: false,
             build_debug: false,
             link_static: false,
+            perf_tool: false,
         }
     }
 
@@ -119,6 +122,11 @@ impl Build {
         self
     }
 
+    pub fn perf_tool(&mut self, enabled: bool) -> &mut Self {
+        self.perf_tool = enabled;
+        self
+    }
+
     pub fn build(&mut self) -> Artifacts {
         let mut config = Config::new(source_dir());
 
@@ -134,12 +142,15 @@ impl Build {
             config.define("CMAKE_BUILD_TYPE", "Release");
         }
 
+        if self.perf_tool {
+            config.define("WITH_PERF_TOOL", "ON");
+        } else {
+            config.define("WITH_PERF_TOOL", "OFF");
+        }
+
         let mut libs = vec![];
 
-        libs.push(Lib {
-            link_type: None,
-            name: "stdc++".to_owned(),
-        });
+        let target = env::var("TARGET").unwrap();
 
         let link_type = {
             if self.link_static {
@@ -161,6 +172,18 @@ impl Build {
             link_type: Some(link_type),
             name: "zmq".to_owned(),
         });
+
+        if target.contains("apple") || target.contains("freebsd") || target.contains("openbsd") {
+            libs.push(Lib {
+                link_type: Some(LinkType::Dynamic),
+                name: "c++".to_owned(),
+            });
+        } else {
+            libs.push(Lib {
+                link_type: Some(LinkType::Dynamic),
+                name: "stdc++".to_owned(),
+            });
+        }
 
         let dest = config.build();
 
