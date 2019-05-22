@@ -11,7 +11,12 @@ See [`testcrate`](testcrate/) for a usage example.
 * [CMake 2.8.12+ (or 3.0.2+ on Darwin)](https://github.com/zeromq/libzmq/blob/de4d69f59788fed86bcb0f610723c5acd486a7da/CMakeLists.txt#L7)
 
 # License
-This project is licensed under either of
+While [`libzmq`] is license under `LGPL`, is has a linking exception, this means it does not apply to this library.
+To quote from the [`zeromq website`]:
+> ZeroMQ is safe for use in close-source applications. The LGPL share-alike terms do not apply to applications built on top of ZeroMQ.
+> You do not need a commercial license. The LGPL applies to ZeroMQ's own source code, not your applications. Many commercial applications use ZeroMQ.
+
+Thus this project is effectively licensed under either of
 
  * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
    http://www.apache.org/licenses/LICENSE-2.0)
@@ -22,5 +27,8 @@ at your option.
 
 ### Contribution
 Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in `libzmq` by you, as defined in the Apache-2.0 license, shall be
+for inclusion in `zeromq-src-rs` by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
+
+[`libzmq`]: https://github.com/zeromq/libzmq
+[`zeromq website`]: http://zeromq.org/area:licensing
