@@ -1,7 +1,10 @@
 use cmake::Config;
 
 use std::{
-    env, fmt,
+    collections::HashMap,
+    env,
+    ffi::OsString,
+    fmt,
     fs::read_dir,
     path::{Path, PathBuf},
 };
@@ -91,6 +94,7 @@ pub struct Build {
     build_debug: bool,
     link_static: bool,
     perf_tool: bool,
+    defines: HashMap<OsString, OsString>,
 }
 
 impl Build {
@@ -100,7 +104,19 @@ impl Build {
             build_debug: false,
             link_static: false,
             perf_tool: false,
+            defines: HashMap::new(),
         }
+    }
+
+    pub fn define<K, V>(&mut self, k: K, v: V) -> &mut Self
+    where
+        K: Into<OsString>,
+        V: Into<OsString>,
+    {
+        let k = k.into();
+        let v = v.into();
+        self.defines.insert(k, v);
+        self
     }
 
     /// Build & link statically instead of dynamically.
@@ -185,6 +201,10 @@ impl Build {
                 link_type: Some(LinkType::Dynamic),
                 name: "stdc++".to_owned(),
             });
+        }
+
+        for (k, v) in &self.defines {
+            config.define(k, v);
         }
 
         let dest = config.build();
