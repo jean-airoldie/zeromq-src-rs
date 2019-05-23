@@ -180,7 +180,7 @@ impl Build {
                 link_type: Some(LinkType::Dynamic),
                 name: "c++".to_owned(),
             });
-        } else {
+        } else if target.contains("linux") {
             libs.push(Lib {
                 link_type: Some(LinkType::Dynamic),
                 name: "stdc++".to_owned(),
