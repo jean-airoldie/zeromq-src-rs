@@ -1,7 +1,8 @@
 use std::os::raw::{c_int, c_void};
 
 extern "C" {
-    fn zmq_version(major: *mut i32, minor: *mut i32, patch: *mut i32) -> c_void;
+    fn zmq_version(major: *mut i32, minor: *mut i32, patch: *mut i32)
+        -> c_void;
 }
 
 pub fn version() -> (i32, i32, i32) {

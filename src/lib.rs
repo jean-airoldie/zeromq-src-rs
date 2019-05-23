@@ -1,10 +1,9 @@
 use cmake::Config;
 
 use std::{
-    fmt,
+    env, fmt,
     fs::read_dir,
     path::{Path, PathBuf},
-    env,
 };
 
 pub fn source_dir() -> PathBuf {
@@ -91,7 +90,7 @@ pub struct Build {
     enable_draft: bool,
     build_debug: bool,
     link_static: bool,
-    perf_tool: bool
+    perf_tool: bool,
 }
 
 impl Build {
@@ -173,7 +172,10 @@ impl Build {
             name: "zmq".to_owned(),
         });
 
-        if target.contains("apple") || target.contains("freebsd") || target.contains("openbsd") {
+        if target.contains("apple")
+            || target.contains("freebsd")
+            || target.contains("openbsd")
+        {
             libs.push(Lib {
                 link_type: Some(LinkType::Dynamic),
                 name: "c++".to_owned(),
