@@ -24,10 +24,14 @@ Thus this project is effectively licensed under either of
 
 at your option.
 
+### Acknowledgments
+* Based on [`openssl-src`]
+
 ### Contribution
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in `zeromq-src-rs` by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
+[`openssl-src`]: https://github.com/alexcrichton/openssl-src-rs
 [`libzmq`]: https://github.com/zeromq/libzmq
 [`zeromq website`]: http://zeromq.org/area:licensing
