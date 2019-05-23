@@ -10,6 +10,12 @@ See [`testcrate`](testcrate/) for a usage example.
 # Dependencies
 * [CMake 2.8.12+ (or 3.0.2+ on Darwin)](https://github.com/zeromq/libzmq/blob/de4d69f59788fed86bcb0f610723c5acd486a7da/CMakeLists.txt#L7)
 
+# Versioning
+* The `master` branch uses the [`libzmq`] master and is considered a developper preview.
+* The `lastest_release` branch uses the [`libzmq`] `latest_release` branch and is published on crates.io.
+* On crates.io, the version's build metadata (`VERSION+BUILD_METADATA`) is used to identify what [`libzmq`] version
+   is used.
+
 # License
 While [`libzmq`] is license under `LGPL`, is has a linking exception, which means that this crate does not need to conform to the usual `LGPL` conditions. Indeed this crate does not modify the source code in any way and simply allows linking to `libzmq`. To quote from the [`zeromq website`]:
 > ZeroMQ is safe for use in close-source applications. The LGPL share-alike terms do not apply to applications built on top of ZeroMQ.
