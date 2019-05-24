@@ -13,7 +13,7 @@ See [`testcrate`](testcrate/) for a usage example.
 # Versioning
 * The `master` branch uses the [`libzmq`] master and is considered a developper preview. When a preview is publish,
    the version will take the form of `VERSION-preview+BUILD_METADATA`.
-* The `lastest_release` branch uses the [`libzmq`] `latest_release` branch and is considered a stable branch. When a stable releasr is published, the version will take the form of `VERSION+BUILD_METADATA`.
+* The `lastest_release` branch uses the [`libzmq`] `latest_release` branch and is considered a stable branch. When a stable release is published, the version will take the form of `VERSION+BUILD_METADATA`.
 * In both cases, `BUILD_METADATA` specifies the version of `libzmq` used.
 
 # License
