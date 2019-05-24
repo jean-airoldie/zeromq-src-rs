@@ -14,7 +14,7 @@ keywords = ["libzmq", "zmq", "zeromq"]
 publish = false
 
 [workspace]
-members = ["testcrate"]
+members = ["testcrate-static"]
 
 [dependencies]
 cmake = "0.1"
