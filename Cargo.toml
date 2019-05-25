@@ -14,5 +14,6 @@ keywords = ["libzmq", "zmq", "zeromq"]
 [workspace]
 members = ["testcrate"]
 
-[build-dependencies]
+[dependencies]
 cc = "1.0"
+
