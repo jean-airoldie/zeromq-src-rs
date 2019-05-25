@@ -220,6 +220,10 @@ impl Build {
             libs.push(Lib::new("stdc++", LinkType::Dynamic));
         } else if target.contains("msvc") {
             libs.push(Lib::new("iphlpapi", LinkType::Dynamic));
+
+            if self.build_debug {
+                libs.push(Lib::new("msvcrtd", LinkType::Dynamic));
+            }
         }
 
         if target.contains("msvc") {
