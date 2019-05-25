@@ -20,6 +20,9 @@ pub struct Build {
     cross_sysroot: Option<PathBuf>,
     configure: PathBuf,
     configure_args: Vec<String>,
+    cc: Option<String>,
+    cxx: Option<String>,
+    path: Option<String>,
 }
 
 pub struct Artifacts {
@@ -39,6 +42,9 @@ impl Build {
             cross_sysroot: None,
             configure: source_dir().join("src").join("configure"),
             configure_args: vec!(),
+            cc: env::var("CC").ok(),
+            cxx: env::var("CXX").ok(),
+            path: env::var("PATH").ok(),
         }
     }
 
@@ -88,7 +94,13 @@ impl Build {
 
         let cmd = inner_dir.join("configure");
         if !cmd.exists() {
-            panic!("configure command not found! {:?}", cmd)
+            let autogen = inner_dir.join("autogen.sh");
+            if !autogen.exists() {
+                panic!("neither configure nor autogen.sh exist! {:?}", cmd)
+            }
+            let mut autogen = Command::new(autogen);
+            autogen.current_dir(&inner_dir);
+            self.run_command(autogen, "running autogen.sh");
         }
         let mut configure = Command::new(&cmd);
         for arg in &self.configure_args {
