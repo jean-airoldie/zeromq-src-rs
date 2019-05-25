@@ -34,6 +34,7 @@ where
 pub struct Artifacts {
     include_dir: PathBuf,
     lib_dir: PathBuf,
+    out_dir: PathBuf,
     pkg_config_dir: PathBuf,
     libs: Vec<Lib>,
 }
@@ -50,6 +51,10 @@ impl Artifacts {
         &self.pkg_config_dir
     }
 
+    pub fn out_dir(&self) -> &Path {
+        &self.out_dir
+    }
+
     pub fn libs(&self) -> &[Lib] {
         &self.libs
     }
@@ -61,6 +66,7 @@ impl Artifacts {
         }
         println!("cargo:include={}", self.include_dir.display());
         println!("cargo:lib={}", self.lib_dir.display());
+        println!("cargo:out={}", self.out_dir.display());
     }
 }
 
@@ -220,10 +226,6 @@ impl Build {
             libs.push(Lib::new("stdc++", LinkType::Dynamic));
         } else if target.contains("msvc") {
             libs.push(Lib::new("iphlpapi", LinkType::Dynamic));
-
-            if self.build_debug {
-                libs.push(Lib::new("msvcrtd", LinkType::Dynamic));
-            }
         }
 
         if target.contains("msvc") {
@@ -233,14 +235,11 @@ impl Build {
             // Fix warning C4530: "C++ exception handler used, but unwind
             // semantics are not enabled. Specify /EHsc"
             config.cxxflag("/EHsc");
-            // Force a consistant generator.
-            config.generator("NMake Makefiles");
         }
 
-        let dest = config.build();
-
-        let lib_dir = dest.join("lib");
-        let include_dir = dest.join("include");
+        let out_dir = config.build();
+        let lib_dir = out_dir.join("lib");
+        let include_dir = out_dir.join("include");
         let pkg_config_dir = lib_dir.join("pkgconfig");
 
         // On windows we need to rename the static compiled lib
@@ -252,6 +251,7 @@ impl Build {
         }
 
         Artifacts {
+            out_dir,
             lib_dir,
             include_dir,
             pkg_config_dir,
