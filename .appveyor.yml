@@ -29,3 +29,4 @@ build: false
 
 test_script:
     - cargo test -vv --all
+    - cargo test -vv --all --release
