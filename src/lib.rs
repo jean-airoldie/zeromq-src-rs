@@ -1,8 +1,7 @@
 use cmake::Config;
 
 use std::{
-    env, fmt,
-    fs::read_dir,
+    env, fmt, fs,
     path::{Path, PathBuf},
 };
 
@@ -10,10 +9,32 @@ pub fn source_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("vendor")
 }
 
+// Returns Ok(()) is file was renamed,
+// Returns Err(()) otherwise.
+fn rename_libzmq_in_dir<D, N>(dir: D, new_name: N) -> Result<(), ()>
+where
+    D: AsRef<Path>,
+    N: AsRef<Path>,
+{
+    let dir = dir.as_ref();
+    let new_name = new_name.as_ref();
+
+    for entry in fs::read_dir(dir).unwrap() {
+        let file_name = entry.unwrap().file_name();
+        if file_name.to_string_lossy().starts_with("libzmq") {
+            fs::rename(dir.join(file_name), dir.join(new_name)).unwrap();
+            return Ok(());
+        }
+    }
+
+    Err(())
+}
+
 #[derive(Debug, Clone)]
 pub struct Artifacts {
     include_dir: PathBuf,
     lib_dir: PathBuf,
+    out_dir: PathBuf,
     pkg_config_dir: PathBuf,
     libs: Vec<Lib>,
 }
@@ -30,6 +51,10 @@ impl Artifacts {
         &self.pkg_config_dir
     }
 
+    pub fn out_dir(&self) -> &Path {
+        &self.out_dir
+    }
+
     pub fn libs(&self) -> &[Lib] {
         &self.libs
     }
@@ -37,14 +62,11 @@ impl Artifacts {
     pub fn print_cargo_metadata(&self) {
         println!("cargo:rustc-link-search=native={}", self.lib_dir.display());
         for lib in self.libs.iter() {
-            if let Some(link_type) = lib.link_type {
-                println!("cargo:rustc-link-lib={}={}", link_type, lib.name);
-            } else {
-                println!("cargo:rustc-link-lib={}", lib.name);
-            }
+            println!("cargo:rustc-link-lib={}{}", lib.link_type, lib.name);
         }
         println!("cargo:include={}", self.include_dir.display());
         println!("cargo:lib={}", self.lib_dir.display());
+        println!("cargo:out={}", self.out_dir.display());
     }
 }
 
@@ -52,13 +74,15 @@ impl Artifacts {
 pub enum LinkType {
     Dynamic,
     Static,
+    Unspecified,
 }
 
 impl fmt::Display for LinkType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            LinkType::Dynamic => write!(f, "dylib"),
-            LinkType::Static => write!(f, "static"),
+            LinkType::Dynamic => write!(f, "dylib="),
+            LinkType::Static => write!(f, "static="),
+            LinkType::Unspecified => write!(f, ""),
         }
     }
 }
@@ -72,15 +96,24 @@ pub enum BuildType {
 #[derive(Debug, Clone)]
 pub struct Lib {
     name: String,
-    link_type: Option<LinkType>,
+    link_type: LinkType,
 }
 
 impl Lib {
+    fn new<S>(name: S, link_type: LinkType) -> Self
+    where
+        S: Into<String>,
+    {
+        let name = name.into();
+
+        Self { name, link_type }
+    }
+
     pub fn name(&self) -> &str {
         &self.name
     }
 
-    pub fn link_type(&self) -> Option<LinkType> {
+    pub fn link_type(&self) -> LinkType {
         self.link_type
     }
 }
@@ -129,6 +162,13 @@ impl Build {
     pub fn build(&mut self) -> Artifacts {
         let mut config = Config::new(source_dir());
 
+        config
+            // For the LIBDIR to always be `lib`.
+            .define("CMAKE_INSTALL_LIBDIR", "lib")
+            // `libzmq` uses C99 but doesn't specify it.
+            .define("CMAKE_C_STANDARD", "99")
+            .define("ZMQ_BUILD_TESTS", "OFF");
+
         if self.enable_draft {
             config.define("ENABLE_DRAFTS", "ON");
         } else {
@@ -157,6 +197,10 @@ impl Build {
                     .define("BUILD_SHARED", "OFF")
                     .define("BUILD_STATIC", "ON");
 
+                if target.contains("msvc") {
+                    config.cflag("-DZMQ_STATIC");
+                }
+
                 LinkType::Static
             } else {
                 config
@@ -167,44 +211,47 @@ impl Build {
             }
         };
 
-        libs.push(Lib {
-            link_type: Some(link_type),
-            name: "zmq".to_owned(),
-        });
+        if target.contains("msvc") && link_type == LinkType::Dynamic {
+            panic!("dynamic compilation is currently not supported on windows");
+        }
+
+        libs.push(Lib::new("zmq", link_type));
 
         if target.contains("apple")
             || target.contains("freebsd")
             || target.contains("openbsd")
         {
-            libs.push(Lib {
-                link_type: Some(LinkType::Dynamic),
-                name: "c++".to_owned(),
-            });
+            libs.push(Lib::new("c++", LinkType::Dynamic));
         } else if target.contains("linux") {
-            libs.push(Lib {
-                link_type: Some(LinkType::Dynamic),
-                name: "stdc++".to_owned(),
-            });
+            libs.push(Lib::new("stdc++", LinkType::Dynamic));
+        } else if target.contains("msvc") {
+            libs.push(Lib::new("iphlpapi", LinkType::Dynamic));
         }
 
-        let dest = config.build();
+        if target.contains("msvc") {
+            // We need to explicitly disable `/GL` flag, otherwise
+            // we get linkage error.
+            config.cxxflag("/GL-");
+            // Fix warning C4530: "C++ exception handler used, but unwind
+            // semantics are not enabled. Specify /EHsc"
+            config.cxxflag("/EHsc");
+        }
 
-        // Find the system dependant lib directory.
-        let lib_path = {
-            if read_dir(dest.join("lib")).is_ok() {
-                "lib"
-            } else if read_dir(dest.join("lib64")).is_ok() {
-                "lib64"
-            } else {
-                panic!("cannot find lib directory")
-            }
-        };
-
-        let lib_dir = dest.join(lib_path);
-        let include_dir = dest.join("include");
+        let out_dir = config.build();
+        let lib_dir = out_dir.join("lib");
+        let include_dir = out_dir.join("include");
         let pkg_config_dir = lib_dir.join("pkgconfig");
 
+        // On windows we need to rename the static compiled lib
+        // since its name is unpredictable.
+        if target.contains("msvc") {
+            if let Err(_) = rename_libzmq_in_dir(&lib_dir, "zmq.lib") {
+                panic!("unable to find compiled `libzmq` lib");
+            }
+        }
+
         Artifacts {
+            out_dir,
             lib_dir,
             include_dir,
             pkg_config_dir,

@@ -5,10 +5,15 @@
 
 This crate is intended to be consumed by a `sys` crate.
 
-See [`testcrate`](testcrate/) for a usage example.
+See [`testcrate-static`](testcrate-static) for a usage example.
 
 # Dependencies
 * [CMake 2.8.12+ (or 3.0.2+ on Darwin)](https://github.com/zeromq/libzmq/blob/de4d69f59788fed86bcb0f610723c5acd486a7da/CMakeLists.txt#L7)
+
+# Env Vars
+* `DEP_ZMQ_INCLUDE` is path to the include directory.
+* `DEP_ZMQ_LIB` is the path to the lib directory.
+* `DEP_ZMQ_OUT` is the path to the out directory (root).
 
 # Versioning
 * The `master` branch uses the [`libzmq`] master and is considered a developper preview. When a preview is publish,

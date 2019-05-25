@@ -12,7 +12,7 @@ readme = "README.md"
 keywords = ["libzmq", "zmq", "zeromq"]
 
 [workspace]
-members = ["testcrate"]
+members = ["testcrate-static"]
 
 [dependencies]
 cmake = "0.1"
