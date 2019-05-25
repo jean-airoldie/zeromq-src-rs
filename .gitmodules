@@ -1,4 +1,4 @@
 [submodule "vendor"]
 	path = vendor
 	url = https://github.com/zeromq/libzmq
-	branch = stable
+	branch = latest_release
