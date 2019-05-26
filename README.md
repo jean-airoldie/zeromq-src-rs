@@ -1,3 +1,5 @@
+[![](https://img.shields.io/crates/v/zeromq-src.svg)][crates-io]
+[![](https://docs.rs/zeromq-src/badge.svg)][api-docs]
 [![Apache 2.0 licensed](https://img.shields.io/badge/license-Apache2.0-blue.svg)](./LICENSE-APACHE)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE-MIT)
 
@@ -46,3 +48,5 @@ dual licensed as above, without any additional terms or conditions.
 [`openssl-src`]: https://github.com/alexcrichton/openssl-src-rs
 [`libzmq`]: https://github.com/zeromq/libzmq
 [`zeromq website`]: http://zeromq.org/area:licensing
+[crates-io]: https://crates.io/crates/zeromq-src
+[api-docs]: https://docs.rs/zeromq-src
