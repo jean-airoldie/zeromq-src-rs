@@ -17,12 +17,8 @@ pub struct Build {
     out_dir: Option<PathBuf>,
     target: Option<String>,
     host: Option<String>,
-    cross_sysroot: Option<PathBuf>,
     configure: PathBuf,
     configure_args: Vec<String>,
-    cc: Option<String>,
-    cxx: Option<String>,
-    path: Option<String>,
 }
 
 pub struct Artifacts {
@@ -39,12 +35,8 @@ impl Build {
             }),
             target: env::var("TARGET").ok(),
             host: env::var("HOST").ok(),
-            cross_sysroot: None,
             configure: source_dir().join("src").join("configure"),
             configure_args: vec!(),
-            cc: env::var("CC").ok(),
-            cxx: env::var("CXX").ok(),
-            path: env::var("PATH").ok(),
         }
     }
 
@@ -112,37 +104,10 @@ impl Build {
             configure.arg(&format!("--prefix={}", install_dir.display()));
         }
 
-        // If we're not on MSVC we configure cross compilers and cross tools and
-        // whatnot. Note that this doesn't happen on MSVC b/c things are pretty
-        // different there and this isn't needed most of the time anyway.
-        if !target.contains("msvc") {
-            let mut cc = cc::Build::new();
-            cc.target(target)
-                .host(host)
-                .warnings(false)
-                .opt_level(2);
-            let compiler = cc.get_compiler();
-            configure.env("CC", compiler.path());
-            let path = compiler.path().to_str().unwrap();
-
-            // Infer ar/ranlib tools from cross compilers if the it looks like
-            // we're doing something like `foo-gcc` route that to `foo-ranlib`
-            // as well.
-//            if path.ends_with("-gcc") && !target.contains("unknown-linux-musl") {
-//                let path = &path[..path.len() - 4];
-//                configure.env("RANLIB", format!("{}-ranlib", path));
-//                configure.env("AR", format!("{}-ar", path));
-//            }
-
-//            let mut cflags = "".to_string();
-//            for arg in compiler.args() {
-//                let x = arg.clone();
-//                let string: String = x.into_string().unwrap();
-//                cflags.push_str(&string);
-//                cflags.push(' ');
-//            }
-
-            configure.env("CFLAGS", compiler.cflags_env());
+        if host != target {
+            // don't ask
+            configure.arg(&format!("--target={}", host));
+            configure.arg(&format!("--host={}", target));
         }
 
         // And finally, run configure!
@@ -162,10 +127,6 @@ impl Build {
             install.arg("install_sw").current_dir(&inner_dir);
             self.run_command(install, "installing");
         } else {
-            let mut depend = Command::new("make");
-            depend.arg("depend").current_dir(&inner_dir);
-            self.run_command(depend, "building dependencies");
-
             let mut build = Command::new("make");
             build.current_dir(&inner_dir);
             if !cfg!(windows) {
@@ -181,12 +142,12 @@ impl Build {
         }
 
         let libs = if target.contains("msvc") {
-            vec!["libssl".to_string(), "libcrypto".to_string()]
+            vec!["libzmq".to_string()]
         } else {
-            vec!["ssl".to_string(), "crypto".to_string()]
+            vec!["zmq".to_string()]
         };
 
-        fs::remove_dir_all(&inner_dir).unwrap();
+        //fs::remove_dir_all(&inner_dir).unwrap();
 
         Artifacts {
             lib_dir: install_dir.join("lib"),
@@ -197,9 +158,6 @@ impl Build {
 
     fn run_command(&self, mut command: Command, desc: &str) {
         println!("running {:?}", command);
-        if let Some(ref path) = self.cross_sysroot {
-            command.env("CROSS_SYSROOT", path);
-        }
         let status = command.status().unwrap();
         if !status.success() {
             panic!("
@@ -211,9 +169,9 @@ Error {}:
 
 
     ",
-                desc,
-                command,
-                status);
+                   desc,
+                   command,
+                   status);
         }
     }
 }
@@ -236,7 +194,7 @@ fn cp_r(src: &Path, dst: &Path) {
 
 fn sanitize_sh(path: &Path) -> String {
     if !cfg!(windows) {
-        return path.to_str().unwrap().to_string()
+        return path.to_str().unwrap().to_string();
     }
     let path = path.to_str().unwrap().replace("\\", "/");
     return change_drive(&path).unwrap_or(path);
@@ -245,10 +203,10 @@ fn sanitize_sh(path: &Path) -> String {
         let mut ch = s.chars();
         let drive = ch.next().unwrap_or('C');
         if ch.next() != Some(':') {
-            return None
+            return None;
         }
         if ch.next() != Some('/') {
-            return None
+            return None;
         }
         Some(format!("/{}/{}", drive, &s[drive.len_utf8() + 2..]))
     }
@@ -270,7 +228,7 @@ impl Artifacts {
     pub fn print_cargo_metadata(&self) {
         println!("cargo:rustc-link-search=native={}", self.lib_dir.display());
         for lib in self.libs.iter() {
-            println!("cargo:rustc-link-lib=static={}", lib);
+            println!("cargo:rustc-link-lib={}", lib);
         }
         println!("cargo:include={}", self.include_dir.display());
         println!("cargo:lib={}", self.lib_dir.display());
