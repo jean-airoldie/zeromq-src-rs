@@ -1,8 +1,0 @@
-[package]
-name = "testcrate-static"
-version = "0.1.0"
-authors = ["jean-airoldie <maxence.caron@protonmail.com>"]
-edition = "2018"
-
-[build-dependencies]
-zeromq-src = { path = ".." }

@@ -1,0 +1,15 @@
+[package]
+name = "testcrate"
+version = "0.1.0"
+authors = ["jean-airoldie <maxence.caron@protonmail.com>"]
+edition = "2018"
+
+[features]
+static = []
+libsodium = ['libsodium-sys']
+
+[dependencies]
+libsodium-sys = { git = "https://github.com/jean-airoldie/sodiumoxide", branch = "libsodium-sys-include", optional = true }
+
+[build-dependencies]
+zeromq-src = { path = ".." }
