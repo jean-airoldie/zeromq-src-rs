@@ -18,10 +18,9 @@ See [`testcrate-static`](testcrate-static) for a usage example.
 * `DEP_ZMQ_OUT` is the path to the out directory (root).
 
 # Versioning
-* The `master` branch uses the [`libzmq`] master and is considered a developper preview. When a preview is publish,
-   the version will take the form of `VERSION-preview+BUILD_METADATA`.
-* The `lastest_release` branch uses the [`libzmq`] `latest_release` branch and is considered a stable branch. When a stable release is published, the version will take the form of `VERSION+BUILD_METADATA`.
-* In both cases, `BUILD_METADATA` specifies the version of `libzmq` used.
+* The `master` branch uses the [`libzmq`] `latest_release` branch and is
+    considered a stable branch. When a stable release is published, the version
+    will take the form of `VERSION+BUILD_METADATA`.
 
 # License
 While [`libzmq`] is license under `LGPL`, is has a linking exception, which means that this crate does not need to conform to the usual `LGPL` conditions. Indeed this crate does not modify the source code in any way and simply allows linking to `libzmq`. To quote from the [`zeromq website`]:
