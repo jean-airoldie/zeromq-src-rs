@@ -300,10 +300,8 @@ impl Build {
 
         // On windows we need to rename the static compiled lib
         // since its name is unpredictable.
-        if target.contains("msvc") {
-            if rename_libzmq_in_dir(&lib_dir, "zmq.lib").is_err() {
-                panic!("unable to find compiled `libzmq` lib");
-            }
+        if target.contains("msvc") && rename_libzmq_in_dir(&lib_dir, "zmq.lib").is_err() {
+            panic!("unable to find compiled `libzmq` lib");
         }
 
         Artifacts {
