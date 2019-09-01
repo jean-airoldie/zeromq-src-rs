@@ -268,7 +268,11 @@ impl Build {
             config.define("SODIUM_LIBRARIES", location.lib_dir());
             config.define("SODIUM_INCLUDE_DIRS", location.include_dir());
 
-            libs.push(Lib::new("sodium", LinkType::Unspecified));
+            if target.contains("msvc") {
+                libs.push(Lib::new("libsodium", LinkType::Static));
+            } else {
+                libs.push(Lib::new("sodium", LinkType::Unspecified));
+            }
         } else {
             config.define("WITH_LIBSODIUM", "OFF");
         }
@@ -300,7 +304,9 @@ impl Build {
 
         // On windows we need to rename the static compiled lib
         // since its name is unpredictable.
-        if target.contains("msvc") && rename_libzmq_in_dir(&lib_dir, "zmq.lib").is_err() {
+        if target.contains("msvc")
+            && rename_libzmq_in_dir(&lib_dir, "zmq.lib").is_err()
+        {
             panic!("unable to find compiled `libzmq` lib");
         }
 

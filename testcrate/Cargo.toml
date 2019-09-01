@@ -9,7 +9,7 @@ static = []
 libsodium = ['libsodium-sys']
 
 [dependencies]
-libsodium-sys = { git = "https://github.com/jean-airoldie/sodiumoxide", branch = "libsodium-sys-include", optional = true }
+libsodium-sys = { version = "0.2.3", optional = true }
 
 [build-dependencies]
 zeromq-src = { path = ".." }
