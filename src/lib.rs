@@ -119,11 +119,39 @@ impl Lib {
 }
 
 #[derive(Debug, Clone)]
+pub struct LibLocation {
+    include_dir: PathBuf,
+    lib_dir: PathBuf,
+}
+
+impl LibLocation {
+    pub fn new<L, I>(lib_dir: L, include_dir: I) -> Self
+    where
+        L: Into<PathBuf>,
+        I: Into<PathBuf>,
+    {
+        Self {
+            include_dir: include_dir.into(),
+            lib_dir: lib_dir.into(),
+        }
+    }
+
+    pub fn include_dir(&self) -> &Path {
+        &self.include_dir
+    }
+
+    pub fn lib_dir(&self) -> &Path {
+        &self.lib_dir
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Build {
     enable_draft: bool,
     build_debug: bool,
     link_static: bool,
     perf_tool: bool,
+    libsodium: Option<LibLocation>,
 }
 
 impl Build {
@@ -133,6 +161,7 @@ impl Build {
             build_debug: false,
             link_static: false,
             perf_tool: false,
+            libsodium: None,
         }
     }
 
@@ -154,11 +183,27 @@ impl Build {
         self
     }
 
+    /// Build with perf-tools.
     pub fn perf_tool(&mut self, enabled: bool) -> &mut Self {
         self.perf_tool = enabled;
         self
     }
 
+    /// Use an external `libsodium` library instead of `tweenacl`.
+    ///
+    /// Users can link against an installed lib or another `sys` or `src` crate
+    /// that provides the lib.
+    ///
+    /// [`links build metadata`]: https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
+    pub fn with_libsodium(&mut self, maybe: Option<LibLocation>) -> &mut Self {
+        self.libsodium = maybe;
+        self
+    }
+
+    /// Build and link the lib based on the provided options.
+    ///
+    /// Returns an `Artifacts` which contains metadata for linking
+    /// against the compiled lib from rust code.
     pub fn build(&mut self) -> Artifacts {
         let mut config = Config::new(source_dir());
 
@@ -187,8 +232,6 @@ impl Build {
             config.define("WITH_PERF_TOOL", "OFF");
         }
 
-        let mut libs = vec![];
-
         let target = env::var("TARGET").unwrap();
 
         let link_type = {
@@ -215,7 +258,24 @@ impl Build {
             panic!("dynamic compilation is currently not supported on windows");
         }
 
+        let mut libs = vec![];
+
         libs.push(Lib::new("zmq", link_type));
+
+        if let Some(ref location) = self.libsodium {
+            config.define("WITH_LIBSODIUM", "ON");
+
+            config.define("SODIUM_LIBRARIES", location.lib_dir());
+            config.define("SODIUM_INCLUDE_DIRS", location.include_dir());
+
+            if target.contains("msvc") {
+                libs.push(Lib::new("libsodium", LinkType::Static));
+            } else {
+                libs.push(Lib::new("sodium", LinkType::Unspecified));
+            }
+        } else {
+            config.define("WITH_LIBSODIUM", "OFF");
+        }
 
         if target.contains("apple")
             || target.contains("freebsd")
@@ -244,10 +304,10 @@ impl Build {
 
         // On windows we need to rename the static compiled lib
         // since its name is unpredictable.
-        if target.contains("msvc") {
-            if rename_libzmq_in_dir(&lib_dir, "zmq.lib").is_err() {
-                panic!("unable to find compiled `libzmq` lib");
-            }
+        if target.contains("msvc")
+            && rename_libzmq_in_dir(&lib_dir, "zmq.lib").is_err()
+        {
+            panic!("unable to find compiled `libzmq` lib");
         }
 
         Artifacts {

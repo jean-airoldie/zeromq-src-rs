@@ -9,7 +9,11 @@ before_script:
     - rustup component add clippy
     - rustup component add rustfmt
 script:
-    - cargo test --all
-    - cargo test --all --release
+    - cd testcrate
+    - cargo test
+    - cargo test --release
+    - cargo test --features "static"
+    - cargo test --features "libsodium"
+    - cd ..
     - cargo fmt --all -- --check
     - cargo clippy --all

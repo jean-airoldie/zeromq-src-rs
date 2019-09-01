@@ -1,8 +1,15 @@
 [package]
-name = "testcrate-static"
+name = "testcrate"
 version = "0.1.0"
 authors = ["jean-airoldie <maxence.caron@protonmail.com>"]
 edition = "2018"
+
+[features]
+static = []
+libsodium = ['libsodium-sys']
+
+[dependencies]
+libsodium-sys = { version = "0.2.3", optional = true }
 
 [build-dependencies]
 zeromq-src = { path = ".." }

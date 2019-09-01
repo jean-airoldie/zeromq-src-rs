@@ -28,5 +28,6 @@ install:
 build: false
 
 test_script:
-    - cargo test -vv --all
-    - cargo test -vv --all --release
+    - cd testcrate
+    - cargo test -vv --features "static"
+    - cargo test -vv --release --features "static"
