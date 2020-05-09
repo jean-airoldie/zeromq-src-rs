@@ -148,6 +148,7 @@ impl LibLocation {
 #[derive(Debug, Clone)]
 pub struct Build {
     enable_draft: bool,
+    enable_curve: bool,
     build_debug: bool,
     link_static: bool,
     perf_tool: bool,
@@ -158,6 +159,7 @@ impl Build {
     pub fn new() -> Self {
         Self {
             enable_draft: false,
+            enable_curve: true,
             build_debug: false,
             link_static: false,
             perf_tool: false,
@@ -180,6 +182,12 @@ impl Build {
     /// Enable the DRAFT API.
     pub fn enable_draft(&mut self, enabled: bool) -> &mut Self {
         self.enable_draft = enabled;
+        self
+    }
+
+    // Enable CURVE mechanism.
+    pub fn enable_curve(&mut self, enabled: bool) -> &mut Self {
+        self.enable_curve = enabled;
         self
     }
 
@@ -218,6 +226,12 @@ impl Build {
             config.define("ENABLE_DRAFTS", "ON");
         } else {
             config.define("ENABLE_DRAFTS", "OFF");
+        }
+
+        if self.enable_curve {
+            config.define("ENABLE_CURVE", "ON");
+        } else {
+            config.define("ENABLE_CURVE", "OFF");
         }
 
         if self.build_debug {
