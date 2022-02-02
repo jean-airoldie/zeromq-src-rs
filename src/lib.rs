@@ -1,5 +1,3 @@
-use cmake::Config;
-
 use std::{
     env, fmt, fs,
     path::{Path, PathBuf},
@@ -7,6 +5,17 @@ use std::{
 
 pub fn source_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("vendor")
+}
+
+fn add_sources(build: &mut cc::Build, root: &str, files: &[&str]) {
+    let root = std::path::Path::new(root);
+    build.files(files.iter().map(|src| {
+        let mut p = root.join(src);
+        p.set_extension("cpp");
+        p
+    }));
+
+    build.include(root);
 }
 
 // Returns Ok(()) is file was renamed,
@@ -19,10 +28,11 @@ where
     let dir = dir.as_ref();
     let new_name = new_name.as_ref();
 
-    for entry in fs::read_dir(dir).unwrap() {
+    for entry in fs::read_dir(dbg!(dir)).unwrap() {
+        eprintln!("{:?}", entry);
         let file_name = entry.unwrap().file_name();
         if file_name.to_string_lossy().starts_with("libzmq") {
-            fs::rename(dir.join(file_name), dir.join(new_name)).unwrap();
+            fs::rename(dir.join(file_name), dbg!(dir.join(new_name))).unwrap();
             return Ok(());
         }
     }
@@ -32,41 +42,12 @@ where
 
 #[derive(Debug, Clone)]
 pub struct Artifacts {
-    include_dir: PathBuf,
-    lib_dir: PathBuf,
-    out_dir: PathBuf,
-    pkg_config_dir: PathBuf,
-    libs: Vec<Lib>,
+
 }
 
 impl Artifacts {
-    pub fn include_dir(&self) -> &Path {
-        &self.include_dir
-    }
-
-    pub fn lib_dir(&self) -> &Path {
-        &self.lib_dir
-    }
-    pub fn pkg_config_dir(&self) -> &Path {
-        &self.pkg_config_dir
-    }
-
-    pub fn out_dir(&self) -> &Path {
-        &self.out_dir
-    }
-
-    pub fn libs(&self) -> &[Lib] {
-        &self.libs
-    }
-
     pub fn print_cargo_metadata(&self) {
-        println!("cargo:rustc-link-search=native={}", self.lib_dir.display());
-        for lib in self.libs.iter() {
-            println!("cargo:rustc-link-lib={}{}", lib.link_type, lib.name);
-        }
-        println!("cargo:include={}", self.include_dir.display());
-        println!("cargo:lib={}", self.lib_dir.display());
-        println!("cargo:out={}", self.out_dir.display());
+        println!("cargo:rustc-link-lib=dylib=iphlpapi");
     }
 }
 
@@ -213,124 +194,248 @@ impl Build {
     /// Returns an `Artifacts` which contains metadata for linking
     /// against the compiled lib from rust code.
     pub fn build(&mut self) -> Artifacts {
-        let mut config = Config::new(source_dir());
+        let path = PathBuf::from("c:/users/jasper/traverse/zeromq-src-rs/");
 
-        config
+        let mut build = cc::Build::new();
+        build
             // For the LIBDIR to always be `lib`.
             .define("CMAKE_INSTALL_LIBDIR", "lib")
             // `libzmq` uses C99 but doesn't specify it.
             .define("CMAKE_C_STANDARD", "99")
-            .define("ZMQ_BUILD_TESTS", "OFF");
+            .define("ZMQ_BUILD_TESTS", "OFF")
+            .include(path.join("vendor/include"))
+            .include(path.join("vendor/builds/deprecated-msvc"))
+            .include(path.join("vendor/src"));
 
-        if self.enable_draft {
-            config.define("ENABLE_DRAFTS", "ON");
-        } else {
-            config.define("ENABLE_DRAFTS", "OFF");
-        }
+        add_sources(
+            &mut build,
+            path.join("vendor/src").to_str().unwrap(),
+            &[
+                "address",
+                "client",
+                "clock",
+                "ctx",
+                "curve_client",
+                "curve_mechanism_base",
+                "curve_server",
+                "dealer",
+                "decoder_allocators",
+                "devpoll",
+                "dgram",
+                "dish",
+                "dist",
+                "endpoint",
+                "epoll",
+                "err",
+                "fq",
+                "gather",
+                "gssapi_client",
+                "gssapi_mechanism_base",
+                "gssapi_server",
+                "io_object",
+                "io_thread",
+                "ip_resolver",
+                "ip",
+                "ipc_address",
+                "ipc_connecter",
+                "ipc_listener",
+                "kqueue",
+                "lb",
+                "mailbox_safe",
+                "mailbox",
+                "mechanism_base",
+                "mechanism",
+                "metadata",
+                "msg",
+                "mtrie",
+                "norm_engine",
+                "null_mechanism",
+                "object",
+                "options",
+                "own",
+                "pair",
+                "pgm_receiver",
+                "pgm_sender",
+                "pgm_socket",
+                "pipe",
+                "plain_client",
+                "plain_server",
+                "poll",
+                "poller_base",
+                "polling_util",
+                "pollset",
+                "precompiled",
+                "proxy",
+                "pub",
+                "pull",
+                "push",
+                "radio",
+                "radix_tree",
+                "random",
+                "raw_decoder",
+                "raw_encoder",
+                "reaper",
+                "rep",
+                "req",
+                "router",
+                "scatter",
+                "select",
+                "server",
+                "session_base",
+                "signaler",
+                "socket_base",
+                "socket_poller",
+                "socks_connecter",
+                "socks",
+                "stream_connecter_base",
+                "stream_engine",
+                "stream_listener_base",
+                "stream",
+                "sub",
+                "tcp_address",
+                "tcp_connecter",
+                "tcp_listener",
+                "tcp",
+                "thread",
+                "timers",
+                "tipc_address",
+                "tipc_connecter",
+                "tipc_listener",
+                "trie",
+                "udp_address",
+                "udp_engine",
+                "v1_decoder",
+                "v1_encoder",
+                "v2_decoder",
+                "v2_encoder",
+                "vmci_address",
+                "vmci_connecter",
+                "vmci_listener",
+                "vmci",
+                "xpub",
+                "xsub",
+                "zap_client",
+                "zmq_utils",
+                "zmq",
+            ],
+        );
 
-        if self.enable_curve {
-            config.define("ENABLE_CURVE", "ON");
-        } else {
-            config.define("ENABLE_CURVE", "OFF");
-        }
+        build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1"); // win32
+        build.define("ZMQ_POLL_BASED_ON_SELECT", "1"); // win32
+        build.define("ZMQ_WIN32_WINNT_DEFAULT", "1");
+        build.define("ZMQ_USE_CV_IMPL_STL11", "1");
 
-        if self.build_debug {
-            config.define("CMAKE_BUILD_TYPE", "Debug");
-        } else {
-            config.define("CMAKE_BUILD_TYPE", "Release");
-        }
+        // if self.enable_draft {
+        //     build.define("ENABLE_DRAFTS", "ON");
+        // } else {
+        //     build.define("ENABLE_DRAFTS", "OFF");
+        // }
 
-        if self.perf_tool {
-            config.define("WITH_PERF_TOOL", "ON");
-        } else {
-            config.define("WITH_PERF_TOOL", "OFF");
-        }
+        // if self.enable_curve {
+        //     build.define("ENABLE_CURVE", "ON");
+        // } else {
+        //     build.define("ENABLE_CURVE", "OFF");
+        // }
+
+        // if self.build_debug {
+        //     build.define("CMAKE_BUILD_TYPE", "Debug");
+        // } else {
+        //     build.define("CMAKE_BUILD_TYPE", "Release");
+        // }
+
+        // if self.perf_tool {
+        //     build.define("WITH_PERF_TOOL", "ON");
+        // } else {
+        //     build.define("WITH_PERF_TOOL", "OFF");
+        // }
 
         let target = env::var("TARGET").unwrap();
 
-        let link_type = {
-            if self.link_static {
-                config
-                    .define("BUILD_SHARED", "OFF")
-                    .define("BUILD_STATIC", "ON");
+        // let link_type = {
+        //     if self.link_static {
+        //         build
+        //             .define("BUILD_SHARED", "OFF")
+        //             .define("BUILD_STATIC", "ON");
 
-                if target.contains("msvc") {
-                    config.cflag("-DZMQ_STATIC");
-                }
+        //         if target.contains("msvc") {
+        //             build.define("ZMQ_STATIC", "1");
+        //         }
 
-                LinkType::Static
-            } else {
-                config
-                    .define("BUILD_SHARED", "ON")
-                    .define("BUILD_STATIC", "OFF");
+        //         LinkType::Static
+        //     } else {
+        //         build
+        //             .define("BUILD_SHARED", "ON")
+        //             .define("BUILD_STATIC", "OFF");
 
-                LinkType::Dynamic
-            }
-        };
+        //         LinkType::Dynamic
+        //     }
+        // };
 
-        if target.contains("msvc") && link_type == LinkType::Dynamic {
-            panic!("dynamic compilation is currently not supported on windows");
-        }
+        // if target.contains("msvc") && link_type == LinkType::Dynamic {
+        //     panic!("dynamic compilation is currently not supported on windows");
+        // }
 
-        let mut libs = vec![];
+        // let mut libs = vec![];
 
-        libs.push(Lib::new("zmq", link_type));
+        // libs.push(Lib::new("zmq.lib", link_type));
 
-        if let Some(ref location) = self.libsodium {
-            config.define("WITH_LIBSODIUM", "ON");
+        // if let Some(ref location) = self.libsodium {
+        //     build.define("WITH_LIBSODIUM", "ON");
 
-            config.define("SODIUM_LIBRARIES", location.lib_dir());
-            config.define("SODIUM_INCLUDE_DIRS", location.include_dir());
+        //     build.define("SODIUM_LIBRARIES", location.lib_dir().to_str());
+        //     build
+        //         .define("SODIUM_INCLUDE_DIRS", location.include_dir().to_str());
 
-            if target.contains("msvc") {
-                libs.push(Lib::new("libsodium", LinkType::Static));
-            } else {
-                libs.push(Lib::new("sodium", LinkType::Unspecified));
-            }
-        } else {
-            config.define("WITH_LIBSODIUM", "OFF");
-        }
+        //     if target.contains("msvc") {
+        //         libs.push(Lib::new("libsodium", LinkType::Static));
+        //     } else {
+        //         libs.push(Lib::new("sodium", LinkType::Unspecified));
+        //     }
+        // } else {
+        //     build.define("WITH_LIBSODIUM", "OFF");
+        // }
 
-        if target.contains("apple")
-            || target.contains("freebsd")
-            || target.contains("openbsd")
-        {
-            libs.push(Lib::new("c++", LinkType::Dynamic));
-        } else if target.contains("linux") {
-            libs.push(Lib::new("stdc++", LinkType::Dynamic));
-        } else if target.contains("msvc") {
-            libs.push(Lib::new("iphlpapi", LinkType::Dynamic));
-        }
+        // if target.contains("apple")
+        //     || target.contains("freebsd")
+        //     || target.contains("openbsd")
+        // {
+        //     libs.push(Lib::new("c++", LinkType::Dynamic));
+        // } else if target.contains("linux") {
+        //     libs.push(Lib::new("stdc++", LinkType::Dynamic));
+        // } else if target.contains("msvc") {
+        //     libs.push(Lib::new("iphlpapi", LinkType::Dynamic));
+        // }
 
         if target.contains("msvc") {
             // We need to explicitly disable `/GL` flag, otherwise
             // we get linkage error.
-            config.cxxflag("/GL-");
+            build.flag("/GL-");
             // Fix warning C4530: "C++ exception handler used, but unwind
             // semantics are not enabled. Specify /EHsc"
-            config.cxxflag("/EHsc");
+            build.flag("/EHsc");
         }
 
-        let out_dir = config.build();
-        let lib_dir = out_dir.join("lib");
+        build.compile("zmq");
+        let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+        let lib_dir = out_dir.join("");
         let include_dir = out_dir.join("include");
         let pkg_config_dir = lib_dir.join("pkgconfig");
 
-        // On windows we need to rename the static compiled lib
-        // since its name is unpredictable.
+        // // On windows we need to rename the static compiled lib
+        // // since its name is unpredictable.
         if target.contains("msvc")
             && rename_libzmq_in_dir(&lib_dir, "zmq.lib").is_err()
         {
             panic!("unable to find compiled `libzmq` lib");
         }
-
-        Artifacts {
-            out_dir,
-            lib_dir,
-            include_dir,
-            pkg_config_dir,
-            libs,
-        }
+        Artifacts {}
+        // Artifacts {
+        //     out_dir,
+        //     lib_dir,
+        //     include_dir,
+        //     pkg_config_dir,
+        //     libs,
+        // }.print_cargo_metadata()
     }
 }
 

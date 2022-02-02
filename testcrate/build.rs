@@ -18,10 +18,10 @@ fn main() {
         None
     };
 
-    let artifacts = zeromq_src::Build::new()
+    zeromq_src::Build::new()
         .build_debug(wants_debug)
         .link_static(wants_static)
         .with_libsodium(maybe_libsodium)
         .build();
-    artifacts.print_cargo_metadata();
+    //artifacts.print_cargo_metadata();
 }
