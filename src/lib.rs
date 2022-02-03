@@ -7,8 +7,8 @@ pub fn source_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("vendor")
 }
 
-fn add_sources(build: &mut cc::Build, root: &str, files: &[&str]) {
-    let root = std::path::Path::new(root);
+fn add_sources(build: &mut cc::Build, root: impl AsRef<Path>, files: &[&str]) {
+    let root = root.as_ref();
     build.files(files.iter().map(|src| {
         let mut p = root.join(src);
         p.set_extension("cpp");
@@ -41,9 +41,7 @@ where
 }
 
 #[derive(Debug, Clone)]
-pub struct Artifacts {
-
-}
+pub struct Artifacts {}
 
 impl Artifacts {
     pub fn print_cargo_metadata(&self) {
@@ -194,7 +192,7 @@ impl Build {
     /// Returns an `Artifacts` which contains metadata for linking
     /// against the compiled lib from rust code.
     pub fn build(&mut self) -> Artifacts {
-        let path = PathBuf::from("c:/users/jasper/traverse/zeromq-src-rs/");
+        let path = source_dir();
 
         let mut build = cc::Build::new();
         build
@@ -203,13 +201,13 @@ impl Build {
             // `libzmq` uses C99 but doesn't specify it.
             .define("CMAKE_C_STANDARD", "99")
             .define("ZMQ_BUILD_TESTS", "OFF")
-            .include(path.join("vendor/include"))
-            .include(path.join("vendor/builds/deprecated-msvc"))
-            .include(path.join("vendor/src"));
+            .include(path.join("include"))
+            .include(path.join("builds/deprecated-msvc"))
+            .include(path.join("src"));
 
         add_sources(
             &mut build,
-            path.join("vendor/src").to_str().unwrap(),
+            path.join("src"),
             &[
                 "address",
                 "client",
