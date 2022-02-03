@@ -7,11 +7,22 @@ pub fn source_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("vendor")
 }
 
-fn add_sources(build: &mut cc::Build, root: impl AsRef<Path>, files: &[&str]) {
+fn add_cpp_sources(build: &mut cc::Build, root: impl AsRef<Path>, files: &[&str]) {
     let root = root.as_ref();
     build.files(files.iter().map(|src| {
         let mut p = root.join(src);
         p.set_extension("cpp");
+        p
+    }));
+
+    build.include(root);
+}
+
+fn add_c_sources(build: &mut cc::Build, root: impl AsRef<Path>, files: &[&str]) {
+    let root = root.as_ref();
+    build.files(files.iter().map(|src| {
+        let mut p = root.join(src);
+        p.set_extension("c");
         p
     }));
 
@@ -206,13 +217,15 @@ impl Build {
             .define("CMAKE_C_STANDARD", "99")
             .define("ZMQ_BUILD_TESTS", "OFF")
             .include(path.join("include"))
+            //.include(path.join("external/include/sha1"))
             .include(path.join("src"));
 
-        add_sources(
+        add_cpp_sources(
             &mut build,
             path.join("src"),
             &[
                 "address",
+                "channel",
                 "client",
                 "clock",
                 "ctx",
@@ -255,6 +268,7 @@ impl Build {
                 "options",
                 "own",
                 "pair",
+                "peer",
                 "pgm_receiver",
                 "pgm_sender",
                 "pgm_socket",
@@ -275,6 +289,7 @@ impl Build {
                 "random",
                 "raw_decoder",
                 "raw_encoder",
+                "raw_engine",
                 "reaper",
                 "rep",
                 "req",
@@ -289,7 +304,7 @@ impl Build {
                 "socks_connecter",
                 "socks",
                 "stream_connecter_base",
-                // "stream_engine",
+                "stream_engine_base",
                 "stream_listener_base",
                 "stream",
                 "sub",
@@ -309,15 +324,33 @@ impl Build {
                 "v1_encoder",
                 "v2_decoder",
                 "v2_encoder",
+                "v3_1_encoder",
                 "vmci_address",
                 "vmci_connecter",
                 "vmci_listener",
                 "vmci",
+                "ws_address",
+                "ws_connecter",
+                "ws_decoder",
+                "ws_encoder",
+                "ws_engine",
+                "ws_listener",
+                // "wss_address", // requires gnutls
+                // "wss_engine", // requires gnutls
                 "xpub",
                 "xsub",
                 "zap_client",
                 "zmq_utils",
                 "zmq",
+                "zmtp_engine",
+            ],
+        );
+
+        add_c_sources(
+            &mut build,
+            path.join("external/sha1"),
+            &[
+                "sha1.c"
             ],
         );
 
@@ -325,6 +358,14 @@ impl Build {
         build.define("ZMQ_POLL_BASED_ON_SELECT", "1"); // win32
         build.define("ZMQ_WIN32_WINNT_DEFAULT", "1");
         build.define("ZMQ_USE_CV_IMPL_STL11", "1");
+        build.define("ZMQ_BUILD_DRAFT_API", "1");
+        build.define("ZMQ_STATIC", "1");
+        build.define("ZMQ_USE_BUILTIN_SHA1", "1");
+
+        build.define("ZMQ_HAVE_WS", "1");
+        //build.define("ZMQ_HAVE_IPC", "1");  // IPC doesn't work on windows with `select`
+
+        //build.define("ZMQ_USE_GNUTLS", "1");
 
         // if self.enable_draft {
         //     build.define("ENABLE_DRAFTS", "ON");
