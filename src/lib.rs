@@ -197,17 +197,6 @@ impl Build {
     pub fn build(&mut self) -> Artifacts {
         let path = source_dir();
 
-        // https://cmake.org/cmake/help/latest/command/configure_file.html
-        // TODO: Replace `#cmakedefine` with the appropriate `#define`
-        // let _platform_file =
-        //     std::fs::read_to_string(path.join("builds/cmake/platform.hpp.in"))
-        //         .unwrap();
-
-        // TODO: Write these to a neat directory inside `out`
-        let out_includes = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-        // Write out an empty platform file: defines will be set through cc directly
-        std::fs::write(out_includes.join("platform.hpp"), "").unwrap();
-
         let mut build = cc::Build::new();
         build
             .cpp(true)
@@ -217,8 +206,7 @@ impl Build {
             .define("CMAKE_C_STANDARD", "99")
             .define("ZMQ_BUILD_TESTS", "OFF")
             .include(path.join("include"))
-            .include(path.join("src"))
-            .include(out_includes);
+            .include(path.join("src"));
 
         add_sources(
             &mut build,
@@ -366,6 +354,18 @@ impl Build {
         if target.contains("msvc") {
             build.include(path.join("builds/deprecated-msvc"));
         } else if target.contains("linux") {
+            // https://cmake.org/cmake/help/latest/command/configure_file.html
+            // TODO: Replace `#cmakedefine` with the appropriate `#define`
+            // let _platform_file =
+            //     std::fs::read_to_string(path.join("builds/cmake/platform.hpp.in"))
+            //         .unwrap();
+
+            // TODO: Write these to a neat directory inside `out`
+            let out_includes = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+            // Write out an empty platform file: defines will be set through cc directly
+            std::fs::write(out_includes.join("platform.hpp"), "").unwrap();
+            build.include(out_includes);
+
             // TODO: check_cxx_symbol_exists(strnlen string.h HAVE_STRNLEN)
             build.define("HAVE_STRNLEN", "1");
             // check_include_files(sys/uio.h ZMQ_HAVE_UIO)
