@@ -57,7 +57,7 @@ pub struct Artifacts {}
 impl Artifacts {
     pub fn print_cargo_metadata(&self) {
         let target = env::var("TARGET").unwrap();
-        if target.contains("msvc") {
+        if target.contains("windows") {
             println!("cargo:rustc-link-lib=dylib=iphlpapi");
         }
     }
