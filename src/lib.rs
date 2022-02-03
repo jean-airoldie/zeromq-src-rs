@@ -350,10 +350,7 @@ impl Build {
         //     build.define("WITH_PERF_TOOL", "OFF");
         // }
 
-        let target = env::var("TARGET").unwrap();
-        if target.contains("msvc") {
-            build.include(path.join("builds/deprecated-msvc"));
-        } else if target.contains("linux") {
+        let mut create_platform_hpp_shim = || {
             // https://cmake.org/cmake/help/latest/command/configure_file.html
             // TODO: Replace `#cmakedefine` with the appropriate `#define`
             // let _platform_file =
@@ -365,11 +362,25 @@ impl Build {
             // Write out an empty platform file: defines will be set through cc directly
             std::fs::write(out_includes.join("platform.hpp"), "").unwrap();
             build.include(out_includes);
+        };
+
+        let target = env::var("TARGET").unwrap();
+        if target.contains("msvc") {
+            build.include(path.join("builds/deprecated-msvc"));
+        } else if target.contains("linux") {
+            create_platform_hpp_shim();
 
             // TODO: check_cxx_symbol_exists(strnlen string.h HAVE_STRNLEN)
             build.define("HAVE_STRNLEN", "1");
             // check_include_files(sys/uio.h ZMQ_HAVE_UIO)
             build.define("ZMQ_HAVE_UIO", "1");
+        } else if target.contains("windows-gnu") {
+            // build.include(path.join("builds/mingw32"));
+
+            // Mingw32 forces the use of ZMQ_USE_LIBSODIUM
+
+            create_platform_hpp_shim();
+            build.define("ZMQ_HAVE_WINDOWS", "1");
         }
 
         // let link_type = {
