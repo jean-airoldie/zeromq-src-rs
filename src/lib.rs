@@ -354,8 +354,6 @@ impl Build {
             ],
         );
 
-        build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1"); // win32
-        build.define("ZMQ_POLL_BASED_ON_SELECT", "1"); // win32
         //build.define("ZMQ_WIN32_WINNT_DEFAULT", "1");
         build.define("ZMQ_USE_CV_IMPL_STL11", "1");
         build.define("ZMQ_BUILD_DRAFT_API", "1");
@@ -364,9 +362,6 @@ impl Build {
 
         build.define("ZMQ_HAVE_WS", "1");
 
-        build.define("_WIN32_WINNT", "0x0600"); // vista
-
-        build.object("iphlpapi.lib");
         //build.define("ZMQ_HAVE_IPC", "1");  // IPC doesn't work on windows with `select`
 
         //build.define("ZMQ_USE_GNUTLS", "1");
@@ -410,10 +405,30 @@ impl Build {
         };
 
         let target = env::var("TARGET").unwrap();
+
         if target.contains("msvc") {
+            build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");
+            build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
+    
             build.include(path.join("builds/deprecated-msvc"));
+
+             // We need to explicitly disable `/GL` flag, otherwise
+            // we get linkage error.
+            build.flag("/GL-");
+
+            // Fix warning C4530: "C++ exception handler used, but unwind
+            // semantics are not enabled. Specify /EHsc"
+            build.flag("/EHsc");
+
+            build.define("_WIN32_WINNT", "0x0600"); // vista
+
+            build.object("iphlpapi.lib");
         } else if target.contains("linux") {
             create_platform_hpp_shim();
+            
+            build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
+            build.define("ZMQ_POLL_BASED_ON_POLL", "1");
+
 
             // TODO: check_cxx_symbol_exists(strnlen string.h HAVE_STRNLEN)
             build.define("HAVE_STRNLEN", "1");
@@ -427,70 +442,6 @@ impl Build {
             create_platform_hpp_shim();
             build.define("ZMQ_HAVE_WINDOWS", "1");
             build.define("HAVE_STRNLEN", "1");
-        }
-
-        // let link_type = {
-        //     if self.link_static {
-        //         build
-        //             .define("BUILD_SHARED", "OFF")
-        //             .define("BUILD_STATIC", "ON");
-
-        //         if target.contains("msvc") {
-        //             build.define("ZMQ_STATIC", "1");
-        //         }
-
-        //         LinkType::Static
-        //     } else {
-        //         build
-        //             .define("BUILD_SHARED", "ON")
-        //             .define("BUILD_STATIC", "OFF");
-
-        //         LinkType::Dynamic
-        //     }
-        // };
-
-        // if target.contains("msvc") && link_type == LinkType::Dynamic {
-        //     panic!("dynamic compilation is currently not supported on windows");
-        // }
-
-        // let mut libs = vec![];
-
-        // libs.push(Lib::new("zmq.lib", link_type));
-
-        // if let Some(ref location) = self.libsodium {
-        //     build.define("WITH_LIBSODIUM", "ON");
-
-        //     build.define("SODIUM_LIBRARIES", location.lib_dir().to_str());
-        //     build
-        //         .define("SODIUM_INCLUDE_DIRS", location.include_dir().to_str());
-
-        //     if target.contains("msvc") {
-        //         libs.push(Lib::new("libsodium", LinkType::Static));
-        //     } else {
-        //         libs.push(Lib::new("sodium", LinkType::Unspecified));
-        //     }
-        // } else {
-        //     build.define("WITH_LIBSODIUM", "OFF");
-        // }
-
-        // if target.contains("apple")
-        //     || target.contains("freebsd")
-        //     || target.contains("openbsd")
-        // {
-        //     libs.push(Lib::new("c++", LinkType::Dynamic));
-        // } else if target.contains("linux") {
-        //     libs.push(Lib::new("stdc++", LinkType::Dynamic));
-        // } else if target.contains("msvc") {
-        //     libs.push(Lib::new("iphlpapi", LinkType::Dynamic));
-        // }
-
-        if target.contains("msvc") {
-            // We need to explicitly disable `/GL` flag, otherwise
-            // we get linkage error.
-            build.flag("/GL-");
-            // Fix warning C4530: "C++ exception handler used, but unwind
-            // semantics are not enabled. Specify /EHsc"
-            build.flag("/EHsc");
         }
 
         build.compile("zmq");
