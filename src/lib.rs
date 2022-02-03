@@ -390,6 +390,10 @@ impl Build {
         //     build.define("WITH_PERF_TOOL", "OFF");
         // }
 
+        if let Some(_) = &self.libsodium {
+            build.define("ZMQ_USE_LIBSODIUM", "1");
+        }
+
         let mut create_platform_hpp_shim = || {
             // https://cmake.org/cmake/help/latest/command/configure_file.html
             // TODO: Replace `#cmakedefine` with the appropriate `#define`
@@ -425,7 +429,7 @@ impl Build {
             build.object("iphlpapi.lib");
         } else if target.contains("linux") {
             create_platform_hpp_shim();
-            
+
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
 
@@ -443,28 +447,19 @@ impl Build {
             build.define("ZMQ_HAVE_WINDOWS", "1");
             build.define("HAVE_STRNLEN", "1");
         }
-
+        
         build.compile("zmq");
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let lib_dir = out_dir.join("");
-        let include_dir = out_dir.join("include");
-        let pkg_config_dir = lib_dir.join("pkgconfig");
 
-        // // On windows we need to rename the static compiled lib
-        // // since its name is unpredictable.
+        // On windows we need to rename the static compiled lib
+        // since its name is unpredictable.
         if target.contains("msvc")
             && rename_libzmq_in_dir(&lib_dir, "zmq.lib").is_err()
         {
             panic!("unable to find compiled `libzmq` lib");
         }
         Artifacts {}
-        // Artifacts {
-        //     out_dir,
-        //     lib_dir,
-        //     include_dir,
-        //     pkg_config_dir,
-        //     libs,
-        // }.print_cargo_metadata()
     }
 }
 
