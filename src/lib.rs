@@ -381,6 +381,7 @@ impl Build {
 
             create_platform_hpp_shim();
             build.define("ZMQ_HAVE_WINDOWS", "1");
+            build.define("HAVE_STRNLEN", "1");
         }
 
         // let link_type = {
