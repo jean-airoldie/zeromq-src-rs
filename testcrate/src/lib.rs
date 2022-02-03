@@ -28,6 +28,6 @@ mod test {
     fn version_works() {
         let version = version();
         println!("{:?}", version);
-        assert_eq!(version, (4, 3, 2));
+        assert_eq!(version, (4, 3, 4));
     }
 }

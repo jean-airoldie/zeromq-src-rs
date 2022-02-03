@@ -356,13 +356,17 @@ impl Build {
 
         build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1"); // win32
         build.define("ZMQ_POLL_BASED_ON_SELECT", "1"); // win32
-        build.define("ZMQ_WIN32_WINNT_DEFAULT", "1");
+        //build.define("ZMQ_WIN32_WINNT_DEFAULT", "1");
         build.define("ZMQ_USE_CV_IMPL_STL11", "1");
         build.define("ZMQ_BUILD_DRAFT_API", "1");
         build.define("ZMQ_STATIC", "1");
         build.define("ZMQ_USE_BUILTIN_SHA1", "1");
 
         build.define("ZMQ_HAVE_WS", "1");
+
+        build.define("_WIN32_WINNT", "0x0600"); // vista
+
+        build.object("iphlpapi.lib");
         //build.define("ZMQ_HAVE_IPC", "1");  // IPC doesn't work on windows with `select`
 
         //build.define("ZMQ_USE_GNUTLS", "1");
