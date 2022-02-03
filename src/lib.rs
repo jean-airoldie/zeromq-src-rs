@@ -289,7 +289,7 @@ impl Build {
                 "socks_connecter",
                 "socks",
                 "stream_connecter_base",
-                "stream_engine",
+                // "stream_engine",
                 "stream_listener_base",
                 "stream",
                 "sub",
