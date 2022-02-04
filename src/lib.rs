@@ -388,6 +388,8 @@ impl Build {
             create_platform_hpp_shim();
             build.define("ZMQ_IOTHREAD_POLLER_USE_KQUEUE", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
+            build.define("HAVE_STRNLEN", "1");
+            build.define("ZMQ_HAVE_STRLCPY", "1");
         }
 
         build.compile("zmq");
