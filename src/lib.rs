@@ -375,7 +375,7 @@ impl Build {
                 build.object("iphlpapi.lib");
             } else {
                 build.define("HAVE_STRNLEN", "1");
-                build.object("iphlpapi");
+                build.flag("-liphlpapi");
             }
 
         } else if target.contains("linux") {
