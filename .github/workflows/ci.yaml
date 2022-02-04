@@ -51,4 +51,4 @@ jobs:
         with:
           command: test
             cwd: ./testcrate
-          args: ${{ matrix.tests }}
+          args: --manifest-path testcrate/Cargo.toml ${{ matrix.tests }}
