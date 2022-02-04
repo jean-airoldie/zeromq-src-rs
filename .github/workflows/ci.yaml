@@ -7,9 +7,8 @@ jobs:
     name: Check and Lint
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
         rust: [stable]
-        tests: ["", "--release", "--features=static"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -24,7 +23,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
@@ -46,8 +45,59 @@ jobs:
         with:
           command: clippy
           args: --workspace --all-targets -- -D warnings
+  test:
+    name: Run unit tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable]
+        tests: ["", "--release", "--features=static"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: actions/cache@v2
+        # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
       - name: Cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --manifest-path testcrate/Cargo.toml ${{ matrix.tests }}
+  test-mingw:
+    name: Run unit tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+        tests: ["", "--release", "--features=static"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: actions/cache@v2
+        # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust toolchain
+        run: rustup target add x86_64-pc-windows-gnu && rustup show
+      - name: Cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path testcrate/Cargo.toml --target x86_64-pc-windows-gnu ${{ matrix.tests }}

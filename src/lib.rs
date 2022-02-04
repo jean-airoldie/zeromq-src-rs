@@ -356,7 +356,7 @@ impl Build {
 
         let target = env::var("TARGET").unwrap();
 
-        if target.contains("msvc") {
+        if target.contains("windows") {
             build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
 
@@ -380,10 +380,6 @@ impl Build {
 
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_UIO", "1");
-        } else if target.contains("windows-gnu") {
-            create_platform_hpp_shim();
-            build.define("ZMQ_HAVE_WINDOWS", "1");
-            build.define("HAVE_STRNLEN", "1");
         } else if target.contains("apple") {
             create_platform_hpp_shim();
             build.define("ZMQ_IOTHREAD_POLLER_USE_KQUEUE", "1");
