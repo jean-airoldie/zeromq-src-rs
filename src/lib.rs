@@ -390,6 +390,7 @@ impl Build {
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_STRLCPY", "1");
+            build.define("ZMQ_HAVE_UIO", "1");
         }
 
         build.compile("zmq");
