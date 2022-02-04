@@ -1,5 +1,7 @@
 use std::{
     env, fmt, fs,
+    fs::File,
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -88,64 +90,6 @@ impl fmt::Display for LinkType {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum BuildType {
-    Release,
-    Debug,
-}
-
-#[derive(Debug, Clone)]
-pub struct Lib {
-    name: String,
-    link_type: LinkType,
-}
-
-impl Lib {
-    fn new<S>(name: S, link_type: LinkType) -> Self
-    where
-        S: Into<String>,
-    {
-        let name = name.into();
-
-        Self { name, link_type }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn link_type(&self) -> LinkType {
-        self.link_type
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct LibLocation {
-    include_dir: PathBuf,
-    lib_dir: PathBuf,
-}
-
-impl LibLocation {
-    pub fn new<L, I>(lib_dir: L, include_dir: I) -> Self
-    where
-        L: Into<PathBuf>,
-        I: Into<PathBuf>,
-    {
-        Self {
-            include_dir: include_dir.into(),
-            lib_dir: lib_dir.into(),
-        }
-    }
-
-    pub fn include_dir(&self) -> &Path {
-        &self.include_dir
-    }
-
-    pub fn lib_dir(&self) -> &Path {
-        &self.lib_dir
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Build {
     enable_draft: bool,
@@ -153,7 +97,7 @@ pub struct Build {
     build_debug: bool,
     link_static: bool,
     perf_tool: bool,
-    libsodium: Option<LibLocation>,
+    libsodium: bool,
 }
 
 impl Build {
@@ -164,7 +108,7 @@ impl Build {
             build_debug: false,
             link_static: false,
             perf_tool: false,
-            libsodium: None,
+            libsodium: false,
         }
     }
 
@@ -199,13 +143,8 @@ impl Build {
     }
 
     /// Use an external `libsodium` library instead of `tweenacl`.
-    ///
-    /// Users can link against an installed lib or another `sys` or `src` crate
-    /// that provides the lib.
-    ///
-    /// [`links build metadata`]: https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
-    pub fn with_libsodium(&mut self, maybe: Option<LibLocation>) -> &mut Self {
-        self.libsodium = maybe;
+    pub fn with_libsodium(&mut self, enabled: bool) -> &mut Self {
+        self.libsodium = enabled;
         self
     }
 
@@ -392,7 +331,7 @@ impl Build {
         //     build.define("WITH_PERF_TOOL", "OFF");
         // }
 
-        if let Some(_) = &self.libsodium {
+        if self.libsodium {
             build.define("ZMQ_USE_LIBSODIUM", "1");
         }
 
@@ -407,9 +346,10 @@ impl Build {
 
             // Write out an empty platform file: defines will be set through cc directly,
             // sync to prevent potential IO troubles later on
-            let mut f = File::create(out_includes.join("platform.hpp"))?;
-            f.write_all(b"")?;
-            f.sync_all()?;
+            let mut f =
+                File::create(out_includes.join("platform.hpp")).unwrap();
+            f.write_all(b"").unwrap();
+            f.sync_all().unwrap();
 
             build.include(out_includes);
         };
