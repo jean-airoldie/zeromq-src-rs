@@ -375,7 +375,7 @@ impl Build {
             } else {
                 build.define("HAVE_STRNLEN", "1");
             }
-            
+
             build.object("iphlpapi.lib");
         } else if target.contains("linux") {
             create_platform_hpp_shim();
