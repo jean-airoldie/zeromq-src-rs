@@ -100,6 +100,10 @@ jobs:
           key: ${{ runner.os }}-cargo-test-mingw-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust toolchain
         run: rustup target add x86_64-pc-windows-gnu && rustup show
+      - name: Set up Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+        with:
+          arch: x64
       - name: Cargo test
         uses: actions-rs/cargo@v1
         with:
