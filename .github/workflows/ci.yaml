@@ -50,4 +50,5 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: -p testcrate ${{ matrix.tests }}
+            cwd: ./testcrate
+          args: ${{ matrix.tests }}
