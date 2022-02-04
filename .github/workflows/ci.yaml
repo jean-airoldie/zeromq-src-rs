@@ -80,9 +80,6 @@ jobs:
         rust: [stable]
         tests: ["", "--release", "--features=static"]
     runs-on: ${{ matrix.os }}
-    env:
-      # https://sourceforge.net/p/mingw-w64/bugs/802/
-      CXXFLAGS_x86_64_pc_windows_gnu: -fomit-frame-pointer
     steps:
       - uses: actions/checkout@v2
         with:
@@ -100,11 +97,11 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-test-mingw-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Rust toolchain
         run: rustup target add x86_64-pc-windows-gnu && rustup show
       - name: Cargo test
         uses: actions-rs/cargo@v1
         with:
-          command: test
+          command: build
           args: --manifest-path testcrate/Cargo.toml --target x86_64-pc-windows-gnu ${{ matrix.tests }}
