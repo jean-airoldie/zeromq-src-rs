@@ -370,6 +370,8 @@ impl Build {
                 // Fix warning C4530: "C++ exception handler used, but unwind
                 // semantics are not enabled. Specify /EHsc"
                 build.flag("/EHsc");
+            } else {
+                build.define("HAVE_STRNLEN", "1");
             }
 
             build.define("_WIN32_WINNT", "0x0600"); // vista
