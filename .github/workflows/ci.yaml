@@ -103,5 +103,5 @@ jobs:
       - name: Cargo test
         uses: actions-rs/cargo@v1
         with:
-          command: build
+          command: check
           args: --manifest-path testcrate/Cargo.toml --target x86_64-pc-windows-gnu ${{ matrix.tests }}
