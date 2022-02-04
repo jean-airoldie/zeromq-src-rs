@@ -361,6 +361,8 @@ impl Build {
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
 
             build.include(path.join("builds/deprecated-msvc"));
+            
+            build.define("_WIN32_WINNT", "0x0600"); // vista
 
             if !target.contains("gnu") {
                 // We need to explicitly disable `/GL` flag, otherwise
@@ -370,13 +372,12 @@ impl Build {
                 // Fix warning C4530: "C++ exception handler used, but unwind
                 // semantics are not enabled. Specify /EHsc"
                 build.flag("/EHsc");
+                build.object("iphlpapi.lib");
             } else {
                 build.define("HAVE_STRNLEN", "1");
             }
 
-            build.define("_WIN32_WINNT", "0x0600"); // vista
 
-            build.object("iphlpapi.lib");
         } else if target.contains("linux") {
             create_platform_hpp_shim();
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
