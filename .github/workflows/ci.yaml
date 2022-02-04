@@ -80,6 +80,9 @@ jobs:
         rust: [stable]
         tests: ["", "--release", "--features=static"]
     runs-on: ${{ matrix.os }}
+    env:
+      # https://sourceforge.net/p/mingw-w64/bugs/802/
+      CXXFLAGS_x86_64_pc_windows_gnu: -fomit-frame-pointer
     steps:
       - uses: actions/checkout@v2
         with:
