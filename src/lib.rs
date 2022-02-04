@@ -387,7 +387,6 @@ impl Build {
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_STRLCPY", "1");
             build.define("ZMQ_HAVE_UIO", "1");
-            build.force_frame_pointer(true);
         }
 
         build.compile("zmq");

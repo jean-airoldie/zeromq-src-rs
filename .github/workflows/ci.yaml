@@ -76,7 +76,7 @@ jobs:
     name: Run unit mingw tests
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [windows-latest]
         rust: [stable]
         tests: ["", "--release", "--features=static"]
     runs-on: ${{ matrix.os }}
