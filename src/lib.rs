@@ -361,7 +361,7 @@ impl Build {
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
 
             build.include(path.join("builds/deprecated-msvc"));
-            
+
             build.define("_WIN32_WINNT", "0x0600"); // vista
 
             if !target.contains("gnu") {
@@ -376,8 +376,6 @@ impl Build {
             } else {
                 build.define("HAVE_STRNLEN", "1");
             }
-
-
         } else if target.contains("linux") {
             create_platform_hpp_shim();
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
