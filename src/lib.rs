@@ -375,22 +375,19 @@ impl Build {
             build.object("iphlpapi.lib");
         } else if target.contains("linux") {
             create_platform_hpp_shim();
-
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
 
-            // TODO: check_cxx_symbol_exists(strnlen string.h HAVE_STRNLEN)
             build.define("HAVE_STRNLEN", "1");
-            // check_include_files(sys/uio.h ZMQ_HAVE_UIO)
             build.define("ZMQ_HAVE_UIO", "1");
         } else if target.contains("windows-gnu") {
-            // build.include(path.join("builds/mingw32"));
-
-            // Mingw32 forces the use of ZMQ_USE_LIBSODIUM
-
             create_platform_hpp_shim();
             build.define("ZMQ_HAVE_WINDOWS", "1");
             build.define("HAVE_STRNLEN", "1");
+        } else if target.contains("apple") {
+            create_platform_hpp_shim();
+            build.define("ZMQ_IOTHREAD_POLLER_USE_KQUEUE", "1");
+            build.define("ZMQ_POLL_BASED_ON_POLL", "1");
         }
 
         build.compile("zmq");
