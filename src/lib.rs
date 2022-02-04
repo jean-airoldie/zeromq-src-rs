@@ -372,11 +372,12 @@ impl Build {
                 // Fix warning C4530: "C++ exception handler used, but unwind
                 // semantics are not enabled. Specify /EHsc"
                 build.flag("/EHsc");
+                build.object("iphlpapi.lib");
             } else {
                 build.define("HAVE_STRNLEN", "1");
+                build.object("iphlpapi");
             }
 
-            build.object("iphlpapi.lib");
         } else if target.contains("linux") {
             create_platform_hpp_shim();
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
