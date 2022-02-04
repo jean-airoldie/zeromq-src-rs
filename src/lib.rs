@@ -7,7 +7,11 @@ pub fn source_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("vendor")
 }
 
-fn add_cpp_sources(build: &mut cc::Build, root: impl AsRef<Path>, files: &[&str]) {
+fn add_cpp_sources(
+    build: &mut cc::Build,
+    root: impl AsRef<Path>,
+    files: &[&str],
+) {
     let root = root.as_ref();
     build.files(files.iter().map(|src| {
         let mut p = root.join(src);
@@ -18,7 +22,11 @@ fn add_cpp_sources(build: &mut cc::Build, root: impl AsRef<Path>, files: &[&str]
     build.include(root);
 }
 
-fn add_c_sources(build: &mut cc::Build, root: impl AsRef<Path>, files: &[&str]) {
+fn add_c_sources(
+    build: &mut cc::Build,
+    root: impl AsRef<Path>,
+    files: &[&str],
+) {
     let root = root.as_ref();
     build.files(files.iter().map(|src| {
         let mut p = root.join(src);
@@ -346,13 +354,7 @@ impl Build {
             ],
         );
 
-        add_c_sources(
-            &mut build,
-            path.join("external/sha1"),
-            &[
-                "sha1.c"
-            ],
-        );
+        add_c_sources(&mut build, path.join("external/sha1"), &["sha1.c"]);
 
         //build.define("ZMQ_WIN32_WINNT_DEFAULT", "1");
         build.define("ZMQ_USE_CV_IMPL_STL11", "1");
@@ -401,10 +403,14 @@ impl Build {
             //     std::fs::read_to_string(path.join("builds/cmake/platform.hpp.in"))
             //         .unwrap();
 
-            // TODO: Write these to a neat directory inside `out`
             let out_includes = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-            // Write out an empty platform file: defines will be set through cc directly
-            std::fs::write(out_includes.join("platform.hpp"), "").unwrap();
+
+            // Write out an empty platform file: defines will be set through cc directly,
+            // sync to prevent potential IO troubles later on
+            let mut f = File::create(out_includes.join("platform.hpp"))?;
+            f.write_all(b"")?;
+            f.sync_all()?;
+
             build.include(out_includes);
         };
 
@@ -413,10 +419,10 @@ impl Build {
         if target.contains("msvc") {
             build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
-    
+
             build.include(path.join("builds/deprecated-msvc"));
 
-             // We need to explicitly disable `/GL` flag, otherwise
+            // We need to explicitly disable `/GL` flag, otherwise
             // we get linkage error.
             build.flag("/GL-");
 
@@ -433,7 +439,6 @@ impl Build {
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
 
-
             // TODO: check_cxx_symbol_exists(strnlen string.h HAVE_STRNLEN)
             build.define("HAVE_STRNLEN", "1");
             // check_include_files(sys/uio.h ZMQ_HAVE_UIO)
@@ -447,7 +452,7 @@ impl Build {
             build.define("ZMQ_HAVE_WINDOWS", "1");
             build.define("HAVE_STRNLEN", "1");
         }
-        
+
         build.compile("zmq");
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let lib_dir = out_dir.join("");
