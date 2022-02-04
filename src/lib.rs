@@ -362,13 +362,15 @@ impl Build {
 
             build.include(path.join("builds/deprecated-msvc"));
 
-            // We need to explicitly disable `/GL` flag, otherwise
-            // we get linkage error.
-            build.flag("/GL-");
+            if !target.contains("gnu") {
+                // We need to explicitly disable `/GL` flag, otherwise
+                // we get linkage error.
+                build.flag("/GL-");
 
-            // Fix warning C4530: "C++ exception handler used, but unwind
-            // semantics are not enabled. Specify /EHsc"
-            build.flag("/EHsc");
+                // Fix warning C4530: "C++ exception handler used, but unwind
+                // semantics are not enabled. Specify /EHsc"
+                build.flag("/EHsc");
+            }
 
             build.define("_WIN32_WINNT", "0x0600"); // vista
 
