@@ -195,7 +195,6 @@ impl Build {
             //.include(path.join("external/include/sha1"))
             .include(path.join("src"));
 
-
         add_cpp_sources(
             &mut build,
             path.join("src"),
@@ -342,8 +341,12 @@ impl Build {
 
             if target.contains("msvc") {
                 std::fs::copy(
-                    libsodium.include_dir().join("../../../builds/msvc/version.h"), 
-                    libsodium.include_dir().join("sodium/version.h")).unwrap();
+                    libsodium
+                        .include_dir()
+                        .join("../../../builds/msvc/version.h"),
+                    libsodium.include_dir().join("sodium/version.h"),
+                )
+                .unwrap();
             }
 
             if target.contains("msvc") {
@@ -393,7 +396,6 @@ impl Build {
                 build.define("HAVE_STRNLEN", "1");
                 build.object("iphlpapi");
             }
-
         } else if target.contains("linux") {
             create_platform_hpp_shim();
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
