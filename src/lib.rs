@@ -349,7 +349,7 @@ impl Build {
             if target.contains("msvc") {
                 println!("cargo:rustc-link-lib=static=libsodium");
             } else {
-                println!("cargo:rustc-link-lib=libsodium");
+                println!("cargo:rustc-link-lib=sodium");
             }
         }
 
