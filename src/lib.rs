@@ -91,13 +91,40 @@ impl fmt::Display for LinkType {
 }
 
 #[derive(Debug, Clone)]
+pub struct LibLocation {
+    include_dir: PathBuf,
+    lib_dir: PathBuf,
+}
+
+impl LibLocation {
+    pub fn new<L, I>(lib_dir: L, include_dir: I) -> Self
+    where
+        L: Into<PathBuf>,
+        I: Into<PathBuf>,
+    {
+        Self {
+            include_dir: include_dir.into(),
+            lib_dir: lib_dir.into(),
+        }
+    }
+
+    pub fn include_dir(&self) -> &Path {
+        &self.include_dir
+    }
+
+    pub fn lib_dir(&self) -> &Path {
+        &self.lib_dir
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Build {
     enable_draft: bool,
     enable_curve: bool,
     build_debug: bool,
     link_static: bool,
     perf_tool: bool,
-    libsodium: bool,
+    libsodium: Option<LibLocation>,
 }
 
 impl Build {
@@ -108,7 +135,7 @@ impl Build {
             build_debug: false,
             link_static: false,
             perf_tool: false,
-            libsodium: false,
+            libsodium: None,
         }
     }
 
@@ -143,8 +170,13 @@ impl Build {
     }
 
     /// Use an external `libsodium` library instead of `tweenacl`.
-    pub fn with_libsodium(&mut self, enabled: bool) -> &mut Self {
-        self.libsodium = enabled;
+    ///
+    /// Users can link against an installed lib or another `sys` or `src` crate
+    /// that provides the lib.
+    ///
+    /// [`links build metadata`]: https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
+    pub fn with_libsodium(&mut self, maybe: Option<LibLocation>) -> &mut Self {
+        self.libsodium = maybe;
         self
     }
 
@@ -158,14 +190,11 @@ impl Build {
         let mut build = cc::Build::new();
         build
             .cpp(true)
-            // For the LIBDIR to always be `lib`.
-            .define("CMAKE_INSTALL_LIBDIR", "lib")
-            // `libzmq` uses C99 but doesn't specify it.
-            .define("CMAKE_C_STANDARD", "99")
             .define("ZMQ_BUILD_TESTS", "OFF")
             .include(path.join("include"))
             //.include(path.join("external/include/sha1"))
             .include(path.join("src"));
+
 
         add_cpp_sources(
             &mut build,
@@ -295,7 +324,6 @@ impl Build {
 
         add_c_sources(&mut build, path.join("external/sha1"), &["sha1.c"]);
 
-        //build.define("ZMQ_WIN32_WINNT_DEFAULT", "1");
         build.define("ZMQ_USE_CV_IMPL_STL11", "1");
         build.define("ZMQ_BUILD_DRAFT_API", "1");
         build.define("ZMQ_STATIC", "1");
@@ -303,36 +331,26 @@ impl Build {
 
         build.define("ZMQ_HAVE_WS", "1");
 
-        //build.define("ZMQ_HAVE_IPC", "1");  // IPC doesn't work on windows with `select`
+        let target = env::var("TARGET").unwrap();
 
-        //build.define("ZMQ_USE_GNUTLS", "1");
-
-        // if self.enable_draft {
-        //     build.define("ENABLE_DRAFTS", "ON");
-        // } else {
-        //     build.define("ENABLE_DRAFTS", "OFF");
-        // }
-
-        // if self.enable_curve {
-        //     build.define("ENABLE_CURVE", "ON");
-        // } else {
-        //     build.define("ENABLE_CURVE", "OFF");
-        // }
-
-        // if self.build_debug {
-        //     build.define("CMAKE_BUILD_TYPE", "Debug");
-        // } else {
-        //     build.define("CMAKE_BUILD_TYPE", "Release");
-        // }
-
-        // if self.perf_tool {
-        //     build.define("WITH_PERF_TOOL", "ON");
-        // } else {
-        //     build.define("WITH_PERF_TOOL", "OFF");
-        // }
-
-        if self.libsodium {
+        if let Some(libsodium) = &self.libsodium {
             build.define("ZMQ_USE_LIBSODIUM", "1");
+            build.define("ZMQ_HAVE_CURVE", "1");
+
+            build.include(libsodium.include_dir());
+            println!("cargo:rustc-link-search={:?}", libsodium.lib_dir());
+
+            if target.contains("msvc") {
+                std::fs::copy(
+                    libsodium.include_dir().join("../../../builds/msvc/version.h"), 
+                    libsodium.include_dir().join("sodium/version.h")).unwrap();
+            }
+
+            if target.contains("msvc") {
+                println!("cargo:rustc-link-lib=static=libsodium");
+            } else {
+                println!("cargo:rustc-link-lib=libsodium");
+            }
         }
 
         let mut create_platform_hpp_shim = || {
@@ -353,8 +371,6 @@ impl Build {
 
             build.include(out_includes);
         };
-
-        let target = env::var("TARGET").unwrap();
 
         if target.contains("windows") {
             build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");

@@ -51,7 +51,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         rust: [stable]
-        tests: ["", "--release", "--features=static"]
+        tests: ["", "--release", "--features=static", "--features=libsodium"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2

@@ -16,3 +16,4 @@ members = ["testcrate"]
 
 [dependencies]
 cc = { version = "1", features = ["parallel"] }
+libsodium-sys = "0.2.7"
