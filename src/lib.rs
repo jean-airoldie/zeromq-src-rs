@@ -391,7 +391,7 @@ impl Build {
                 build.object("iphlpapi.lib");
             } else {
                 build.define("HAVE_STRNLEN", "1");
-                //build.define("ZMQ_HAVE_IFADDRS", "1");
+                build.object("iphlpapi");
             }
 
         } else if target.contains("linux") {
