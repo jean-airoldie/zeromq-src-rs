@@ -356,7 +356,7 @@ impl Build {
             }
         }
 
-        let mut create_platform_hpp_shim = || {
+        let create_platform_hpp_shim = |build: &mut cc::Build| {
             // https://cmake.org/cmake/help/latest/command/configure_file.html
             // TODO: Replace `#cmakedefine` with the appropriate `#define`
             // let _platform_file =
@@ -378,8 +378,6 @@ impl Build {
         if target.contains("windows") {
             build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
-
-            
             build.define("_WIN32_WINNT", "0x0600"); // vista
             
             if !target.contains("gnu") {
@@ -393,18 +391,18 @@ impl Build {
                 build.flag("/EHsc");
                 build.object("iphlpapi.lib");
             } else {
-                create_platform_hpp_shim();
+                create_platform_hpp_shim(&mut build);
                 build.define("HAVE_STRNLEN", "1");
             }
         } else if target.contains("linux") {
-            create_platform_hpp_shim();
+            create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
 
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_UIO", "1");
         } else if target.contains("apple") {
-            create_platform_hpp_shim();
+            create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_KQUEUE", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("HAVE_STRNLEN", "1");
