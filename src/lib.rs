@@ -392,8 +392,6 @@ impl Build {
             } else {
                 build.define("HAVE_STRNLEN", "1");
                 //build.define("ZMQ_HAVE_IFADDRS", "1");
-                build.define("ZMQ_USE_LIBSODIUM", "1");
-                build.define("ZMQ_HAVE_WINDOWS", "1");
             }
 
         } else if target.contains("linux") {
