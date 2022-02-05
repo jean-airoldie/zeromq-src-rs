@@ -379,11 +379,11 @@ impl Build {
             build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
 
-            build.include(path.join("builds/deprecated-msvc"));
-
+            
             build.define("_WIN32_WINNT", "0x0600"); // vista
-
+            
             if !target.contains("gnu") {
+                build.include(path.join("builds/deprecated-msvc"));
                 // We need to explicitly disable `/GL` flag, otherwise
                 // we get linkage error.
                 build.flag("/GL-");
@@ -393,8 +393,8 @@ impl Build {
                 build.flag("/EHsc");
                 build.object("iphlpapi.lib");
             } else {
+                create_platform_hpp_shim();
                 build.define("HAVE_STRNLEN", "1");
-                build.object("iphlpapi");
             }
         } else if target.contains("linux") {
             create_platform_hpp_shim();
