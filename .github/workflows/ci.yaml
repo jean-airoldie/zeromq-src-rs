@@ -88,6 +88,10 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           platform: x64
+          install: >-
+            base-devel 
+            mingw-w64-x86_64-toolchain
+            git
       - uses: actions/cache@v2
         # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
         with:
