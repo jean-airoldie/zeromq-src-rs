@@ -379,8 +379,9 @@ impl Build {
             build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
+            println!("cargo:rustc-link-lib=iphlpapi.lib");
             
-            if !target.contains("gnu") {
+            if target.contains("msvc") {
                 build.include(path.join("builds/deprecated-msvc"));
                 // We need to explicitly disable `/GL` flag, otherwise
                 // we get linkage error.
@@ -389,7 +390,6 @@ impl Build {
                 // Fix warning C4530: "C++ exception handler used, but unwind
                 // semantics are not enabled. Specify /EHsc"
                 build.flag("/EHsc");
-                build.object("iphlpapi.lib");
             } else {
                 create_platform_hpp_shim(&mut build);
                 build.define("HAVE_STRNLEN", "1");
