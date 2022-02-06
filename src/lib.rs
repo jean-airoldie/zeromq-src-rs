@@ -379,7 +379,7 @@ impl Build {
             build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
-            println!("cargo:rustc-link-lib=iphlpapi.lib");
+            println!("cargo:rustc-link-lib=iphlpapi");
             
             if target.contains("msvc") {
                 build.include(path.join("builds/deprecated-msvc"));
