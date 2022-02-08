@@ -121,7 +121,6 @@ pub struct Build {
     enable_draft: bool,
     enable_curve: bool,
     build_debug: bool,
-    link_static: bool,
     libsodium: Option<LibLocation>,
 }
 
@@ -131,15 +130,8 @@ impl Build {
             enable_draft: false,
             enable_curve: true,
             build_debug: false,
-            link_static: false,
             libsodium: None,
         }
-    }
-
-    /// Build & link statically instead of dynamically.
-    pub fn link_static(&mut self, enabled: bool) -> &mut Self {
-        self.link_static = enabled;
-        self
     }
 
     /// Build the debug version of the lib.
