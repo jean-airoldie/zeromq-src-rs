@@ -321,8 +321,11 @@ impl Build {
 
         add_c_sources(&mut build, path.join("external/sha1"), &["sha1.c"]);
 
+        if self.enable_draft {
+            build.define("ZMQ_BUILD_DRAFT_API", "1");
+        }
+
         build.define("ZMQ_USE_CV_IMPL_STL11", "1");
-        build.define("ZMQ_BUILD_DRAFT_API", "1");
         build.define("ZMQ_STATIC", "1");
         build.define("ZMQ_USE_BUILTIN_SHA1", "1");
 
