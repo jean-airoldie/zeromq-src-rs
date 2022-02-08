@@ -5,7 +5,6 @@ authors = ["jean-airoldie <maxence.caron@protonmail.com>"]
 edition = "2018"
 
 [features]
-static = []
 libsodium = ['libsodium-sys-stable']
 
 [dependencies]

@@ -5,7 +5,6 @@ fn main() {
     println!("cargo:rerun-if-env-changed=PROFILE");
 
     let wants_debug = env::var("PROFILE").unwrap() == "debug";
-    let wants_static = cfg!(feature = "static");
     let maybe_libsodium = if cfg!(feature = "libsodium") {
         let lib_dir = env::var("DEP_SODIUM_LIB")
             .expect("build metadata `DEP_SODIUM_LIB` required");
