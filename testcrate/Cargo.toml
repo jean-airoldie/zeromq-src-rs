@@ -6,10 +6,10 @@ edition = "2018"
 
 [features]
 static = []
-libsodium = ['libsodium-sys']
+libsodium = ['libsodium-sys-stable']
 
 [dependencies]
-libsodium-sys = { version = "0.2.3", optional = true }
+libsodium-sys-stable = { version = "1.0", optional = true }
 
 [build-dependencies]
 zeromq-src = { path = ".." }
