@@ -46,6 +46,6 @@ mod test {
     fn sodium_version_works() {
         let version = sodium_version();
         println!("{:?}", version.to_str().unwrap());
-        assert!(version.to_str().starts_with("1.0"));
+        assert!(version.to_str().unwrap().starts_with("1.0"));
     }
 }
