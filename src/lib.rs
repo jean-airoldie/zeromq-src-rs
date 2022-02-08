@@ -49,11 +49,10 @@ where
     let dir = dir.as_ref();
     let new_name = new_name.as_ref();
 
-    for entry in fs::read_dir(dbg!(dir)).unwrap() {
-        eprintln!("{:?}", entry);
+    for entry in fs::read_dir(dir).unwrap() {
         let file_name = entry.unwrap().file_name();
         if file_name.to_string_lossy().starts_with("libzmq") {
-            fs::rename(dir.join(file_name), dbg!(dir.join(new_name))).unwrap();
+            fs::rename(dir.join(file_name), dir.join(new_name)).unwrap();
             return Ok(());
         }
     }
@@ -380,7 +379,7 @@ impl Build {
             build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
             println!("cargo:rustc-link-lib=iphlpapi");
-            
+
             if target.contains("msvc") {
                 build.include(path.join("builds/deprecated-msvc"));
                 // We need to explicitly disable `/GL` flag, otherwise
