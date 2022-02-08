@@ -122,7 +122,6 @@ pub struct Build {
     enable_curve: bool,
     build_debug: bool,
     link_static: bool,
-    perf_tool: bool,
     libsodium: Option<LibLocation>,
 }
 
@@ -133,7 +132,6 @@ impl Build {
             enable_curve: true,
             build_debug: false,
             link_static: false,
-            perf_tool: false,
             libsodium: None,
         }
     }
@@ -159,12 +157,6 @@ impl Build {
     // Enable CURVE mechanism.
     pub fn enable_curve(&mut self, enabled: bool) -> &mut Self {
         self.enable_curve = enabled;
-        self
-    }
-
-    /// Build with perf-tools.
-    pub fn perf_tool(&mut self, enabled: bool) -> &mut Self {
-        self.perf_tool = enabled;
         self
     }
 
