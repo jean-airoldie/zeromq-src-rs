@@ -191,7 +191,6 @@ impl Build {
             .cpp(true)
             .define("ZMQ_BUILD_TESTS", "OFF")
             .include(path.join("include"))
-            //.include(path.join("external/include/sha1"))
             .include(path.join("src"));
 
         add_cpp_sources(
