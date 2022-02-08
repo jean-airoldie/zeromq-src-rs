@@ -20,5 +20,4 @@ fn main() {
         .build_debug(wants_debug)
         .with_libsodium(maybe_libsodium)
         .build();
-    //artifacts.print_cargo_metadata();
 }
