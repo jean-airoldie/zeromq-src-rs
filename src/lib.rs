@@ -1,13 +1,9 @@
 use std::{
-    env, fmt, fs,
+    env, fs,
     fs::File,
     io::Write,
     path::{Path, PathBuf},
 };
-
-pub fn source_dir() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("vendor")
-}
 
 fn add_cpp_sources(
     build: &mut cc::Build,
@@ -60,35 +56,7 @@ where
     Err(())
 }
 
-#[derive(Debug, Clone)]
-pub struct Artifacts {}
-
-impl Artifacts {
-    pub fn print_cargo_metadata(&self) {
-        let target = env::var("TARGET").unwrap();
-        if target.contains("windows") {
-            println!("cargo:rustc-link-lib=dylib=iphlpapi");
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum LinkType {
-    Dynamic,
-    Static,
-    Unspecified,
-}
-
-impl fmt::Display for LinkType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            LinkType::Dynamic => write!(f, "dylib="),
-            LinkType::Static => write!(f, "static="),
-            LinkType::Unspecified => write!(f, ""),
-        }
-    }
-}
-
+/// The location of a library.
 #[derive(Debug, Clone)]
 pub struct LibLocation {
     include_dir: PathBuf,
@@ -96,6 +64,7 @@ pub struct LibLocation {
 }
 
 impl LibLocation {
+    /// Create a new `LibLocation`.
     pub fn new<L, I>(lib_dir: L, include_dir: I) -> Self
     where
         L: Into<PathBuf>,
@@ -107,33 +76,43 @@ impl LibLocation {
         }
     }
 
+    /// Returns the `include_dir`.
     pub fn include_dir(&self) -> &Path {
         &self.include_dir
     }
 
+    /// Returns the `lib_dir`.
     pub fn lib_dir(&self) -> &Path {
         &self.lib_dir
     }
 }
 
+/// Settings for building zmq.
 #[derive(Debug, Clone)]
 pub struct Build {
     enable_draft: bool,
-    enable_curve: bool,
     build_debug: bool,
     libsodium: Option<LibLocation>,
 }
 
 impl Build {
+    /// Create a new build.
     pub fn new() -> Self {
         Self {
             enable_draft: false,
-            enable_curve: true,
             build_debug: false,
             libsodium: None,
         }
     }
+}
 
+impl Default for Build {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Build {
     /// Build the debug version of the lib.
     pub fn build_debug(&mut self, enabled: bool) -> &mut Self {
         self.build_debug = enabled;
@@ -146,16 +125,15 @@ impl Build {
         self
     }
 
-    // Enable CURVE mechanism.
-    pub fn enable_curve(&mut self, enabled: bool) -> &mut Self {
-        self.enable_curve = enabled;
-        self
-    }
-
-    /// Use an external `libsodium` library instead of `tweenacl`.
+    /// Enable the CURVE feature and link against an external `libsodium` library.
     ///
     /// Users can link against an installed lib or another `sys` or `src` crate
     /// that provides the lib.
+    ///
+    /// Note that by default `libzmq` builds without `libsodium` by instead
+    /// relying on `tweetnacl`. However since this `tweetnacl` [has never been
+    /// audited nor is ready for production](https://github.com/zeromq/libzmq/issues/3006),
+    /// we require linking against `libsodium` to enable `ZMQ_CURVE`.
     ///
     /// [`links build metadata`]: https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
     pub fn with_libsodium(&mut self, maybe: Option<LibLocation>) -> &mut Self {
@@ -167,19 +145,19 @@ impl Build {
     ///
     /// Returns an `Artifacts` which contains metadata for linking
     /// against the compiled lib from rust code.
-    pub fn build(&mut self) -> Artifacts {
-        let path = source_dir();
+    pub fn build(&mut self) {
+        let vendor = Path::new(env!("CARGO_MANIFEST_DIR")).join("vendor");
 
         let mut build = cc::Build::new();
         build
             .cpp(true)
             .define("ZMQ_BUILD_TESTS", "OFF")
-            .include(path.join("include"))
-            .include(path.join("src"));
+            .include(vendor.join("include"))
+            .include(vendor.join("src"));
 
         add_cpp_sources(
             &mut build,
-            path.join("src"),
+            vendor.join("src"),
             &[
                 "address",
                 "channel",
@@ -303,7 +281,7 @@ impl Build {
             ],
         );
 
-        add_c_sources(&mut build, path.join("external/sha1"), &["sha1.c"]);
+        add_c_sources(&mut build, vendor.join("external/sha1"), &["sha1.c"]);
 
         if self.enable_draft {
             build.define("ZMQ_BUILD_DRAFT_API", "1");
@@ -337,7 +315,7 @@ impl Build {
             if target.contains("msvc") {
                 println!("cargo:rustc-link-lib=static=libsodium");
             } else {
-                println!("cargo:rustc-link-lib=sodium");
+                println!("cargo:rustc-link-lib=static=sodium");
             }
         }
 
@@ -367,7 +345,7 @@ impl Build {
             println!("cargo:rustc-link-lib=iphlpapi");
 
             if target.contains("msvc") {
-                build.include(path.join("builds/deprecated-msvc"));
+                build.include(vendor.join("builds/deprecated-msvc"));
                 // We need to explicitly disable `/GL` flag, otherwise
                 // we get linkage error.
                 build.flag("/GL-");
@@ -395,9 +373,11 @@ impl Build {
             build.define("ZMQ_HAVE_UIO", "1");
         }
 
-        build.compile("zmq");
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-        let lib_dir = out_dir.join("");
+        let lib_dir = out_dir.join("lib");
+
+        build.out_dir(&lib_dir);
+        build.compile("zmq");
 
         // On windows we need to rename the static compiled lib
         // since its name is unpredictable.
@@ -406,12 +386,23 @@ impl Build {
         {
             panic!("unable to find compiled `libzmq` lib");
         }
-        Artifacts {}
-    }
-}
 
-impl Default for Build {
-    fn default() -> Self {
-        Self::new()
+        let source_dir = out_dir.join("source");
+
+        // Finally we need to copy the include files.
+        dircpy::copy_dir(vendor.join("include"), source_dir.join("include"))
+            .expect("unable to copy include dir");
+        dircpy::copy_dir(vendor.join("src"), source_dir.join("src"))
+            .expect("unable to copy src dir");
+        dircpy::copy_dir(vendor.join("external"), source_dir.join("external"))
+            .expect("unable to copy external dir");
+
+        let include_dir = out_dir.join("include");
+
+        println!("cargo:rustc-link-search=native={}", lib_dir.display());
+        println!("cargo:rustc-link-lib=static=zmq");
+        println!("cargo:include={}", include_dir.display());
+        println!("cargo:lib={}", lib_dir.display());
+        println!("cargo:out={}", out_dir.display());
     }
 }
