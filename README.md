@@ -10,7 +10,7 @@ This crate is intended to be consumed by a `sys` crate.
 See [`testcrate-static`](testcrate-static) for a usage example.
 
 # Dependencies
-* [CMake 2.8.12+ (or 3.0.2+ on Darwin)](https://github.com/zeromq/libzmq/blob/de4d69f59788fed86bcb0f610723c5acd486a7da/CMakeLists.txt#L7)
+* A c compiler.
 
 # Env Vars
 * `DEP_ZMQ_INCLUDE` is path to the include directory.
