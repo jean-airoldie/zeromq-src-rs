@@ -357,6 +357,10 @@ impl Build {
                 create_platform_hpp_shim(&mut build);
                 build.define("HAVE_STRNLEN", "1");
             }
+
+            if !target.contains("uwp") {
+                build.define("ZMQ_HAVE_IPC", "1");
+            }
         } else if target.contains("linux") {
             create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
