@@ -361,6 +361,7 @@ impl Build {
             create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
+            build.define("ZMQ_HAVE_IPC", "1");
 
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_UIO", "1");
@@ -371,6 +372,7 @@ impl Build {
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_STRLCPY", "1");
             build.define("ZMQ_HAVE_UIO", "1");
+            build.define("ZMQ_HAVE_IPC", "1");
         }
 
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
