@@ -342,7 +342,7 @@ impl Build {
             // on windows vista and up we can use `epoll` through the `wepoll` lib
             add_c_sources(
                 &mut build,
-                path.join("external/wepoll"),
+                vendor.join("external/wepoll"),
                 &["wepoll.c"],
             );
 
