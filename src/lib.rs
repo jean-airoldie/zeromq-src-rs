@@ -339,9 +339,17 @@ impl Build {
         };
 
         if target.contains("windows") {
-            build.define("ZMQ_IOTHREAD_POLLER_USE_SELECT", "1");
-            build.define("ZMQ_POLL_BASED_ON_SELECT", "1");
+            // on windows vista and up we can use `epoll` through the `wepoll` lib
+            add_c_sources(
+                &mut build,
+                vendor.join("external/wepoll"),
+                &["wepoll.c"],
+            );
+
+            build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
+            build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
+
             println!("cargo:rustc-link-lib=iphlpapi");
 
             if target.contains("msvc") {
@@ -357,10 +365,15 @@ impl Build {
                 create_platform_hpp_shim(&mut build);
                 build.define("HAVE_STRNLEN", "1");
             }
+
+            if !target.contains("uwp") {
+                build.define("ZMQ_HAVE_IPC", "1");
+            }
         } else if target.contains("linux") {
             create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
+            build.define("ZMQ_HAVE_IPC", "1");
 
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_UIO", "1");
@@ -371,6 +384,7 @@ impl Build {
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_STRLCPY", "1");
             build.define("ZMQ_HAVE_UIO", "1");
+            build.define("ZMQ_HAVE_IPC", "1");
         }
 
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
