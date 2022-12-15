@@ -381,6 +381,10 @@ impl Build {
             if target.contains("android") {
                 build.define("ZMQ_HAVE_STRLCPY", "1");
             }
+
+            if target.contains("musl") {
+                build.define("ZMQ_HAVE_STRLCPY", "1");
+            }
         } else if target.contains("apple") {
             create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_KQUEUE", "1");
