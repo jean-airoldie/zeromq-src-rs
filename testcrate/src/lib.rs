@@ -29,23 +29,3 @@ pub fn version() -> (i32, i32, i32) {
 pub fn sodium_version() -> &'static CStr {
     unsafe { CStr::from_ptr(sodium_version_string()) }
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn version_works() {
-        let version = version();
-        println!("{:?}", version);
-        assert_eq!(version, (4, 3, 4));
-    }
-
-    #[test]
-    #[cfg(feature = "libsodium")]
-    fn sodium_version_works() {
-        let version = sodium_version();
-        println!("{:?}", version.to_str().unwrap());
-        assert!(version.to_str().unwrap().starts_with("1.0"));
-    }
-}
