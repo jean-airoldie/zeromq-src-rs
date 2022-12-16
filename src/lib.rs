@@ -428,3 +428,20 @@ impl Build {
         println!("cargo:out={}", out_dir.display());
     }
 }
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn version_works() {
+        let version = testcrate::version();
+        println!("{:?}", version);
+        assert_eq!(version, (4, 3, 4));
+    }
+
+    #[test]
+    fn sodium_version_works() {
+        let version = testcrate::sodium_version();
+        println!("{:?}", version.to_str().unwrap());
+        assert!(version.to_str().unwrap().starts_with("1.0"));
+    }
+}
