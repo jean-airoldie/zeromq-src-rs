@@ -431,8 +431,6 @@ impl Build {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
     #[test]
     fn version_works() {
         let version = testcrate::version();
