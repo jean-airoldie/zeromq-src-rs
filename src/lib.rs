@@ -410,16 +410,15 @@ impl Build {
         }
 
         let source_dir = out_dir.join("source");
+        let include_dir = source_dir.join("include");
 
         // Finally we need to copy the include files.
-        dircpy::copy_dir(vendor.join("include"), source_dir.join("include"))
+        dircpy::copy_dir(vendor.join("include"), &include_dir)
             .expect("unable to copy include dir");
         dircpy::copy_dir(vendor.join("src"), source_dir.join("src"))
             .expect("unable to copy src dir");
         dircpy::copy_dir(vendor.join("external"), source_dir.join("external"))
             .expect("unable to copy external dir");
-
-        let include_dir = out_dir.join("include");
 
         println!("cargo:rustc-link-search=native={}", lib_dir.display());
         println!("cargo:rustc-link-lib=static=zmq");
