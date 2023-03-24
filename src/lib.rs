@@ -419,7 +419,7 @@ impl Build {
         dircpy::copy_dir(vendor.join("external"), source_dir.join("external"))
             .expect("unable to copy external dir");
 
-        let include_dir = out_dir.join("include");
+        let include_dir = source_dir.join("include");
 
         println!("cargo:rustc-link-search=native={}", lib_dir.display());
         println!("cargo:rustc-link-lib=static=zmq");
