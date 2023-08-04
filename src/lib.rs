@@ -1,6 +1,6 @@
 use std::{
-    env, fs,
-    fs::File,
+    env,
+    fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
 };
@@ -54,6 +54,84 @@ where
     }
 
     Err(())
+}
+
+#[cfg(target_env = "gnu")]
+mod glibc {
+    use std::{cmp, ffi::CStr, num, str};
+
+    #[derive(Debug, Eq, PartialEq, Copy, Clone)]
+    pub(crate) struct GlibcVersion {
+        major: u16,
+        minor: u16,
+    }
+
+    impl Ord for GlibcVersion {
+        fn cmp(&self, other: &Self) -> cmp::Ordering {
+            match self.major.cmp(&other.major) {
+                cmp::Ordering::Greater => return cmp::Ordering::Greater,
+                cmp::Ordering::Less => return cmp::Ordering::Less,
+                cmp::Ordering::Equal => (),
+            }
+            self.minor.cmp(&other.minor)
+        }
+    }
+
+    impl PartialOrd for GlibcVersion {
+        fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl GlibcVersion {
+        #[inline]
+        const fn new(major: u16, minor: u16) -> Self {
+            Self { major, minor }
+        }
+
+        pub(crate) fn from_libc() -> Self {
+            // SAFETY Call to libc via ffi.
+            let ptr = unsafe { libc::gnu_get_libc_version() };
+
+            // SAFETY We're reading a static c string via ffi.
+            let cstr = unsafe { CStr::from_ptr(ptr) };
+            let string = cstr.to_str().expect("expected UTF8 string");
+            match string.parse() {
+                Ok(version) => version,
+                Err(_) => {
+                    panic!("unable to parse glibc version, expect MAJOR.MINOR.PATCH, got {}", string);
+                }
+            }
+        }
+
+        pub(crate) fn has_strlcpy(self) -> bool {
+            // > * The strlcpy and strlcat functions have been added.  They are derived
+            //     from OpenBSD, and are expected to be added to a future POSIX version.
+            //
+            // https://sourceware.org/pipermail/libc-alpha/2023-July/150524.html
+            self >= GlibcVersion::new(2, 38)
+        }
+    }
+
+    #[derive(Debug)]
+    pub(crate) struct BadVersion(());
+
+    impl From<num::ParseIntError> for BadVersion {
+        fn from(_: num::ParseIntError) -> Self {
+            Self(())
+        }
+    }
+
+    impl str::FromStr for GlibcVersion {
+        type Err = BadVersion;
+        fn from_str(s: &str) -> Result<Self, BadVersion> {
+            let mut iter = s.split('.');
+            let major = iter.next().ok_or(BadVersion(()))?.parse()?;
+            let minor = iter.next().ok_or(BadVersion(()))?.parse()?;
+
+            Ok(Self { major, minor })
+        }
+    }
 }
 
 /// The location of a library.
@@ -393,6 +471,12 @@ impl Build {
             build.define("ZMQ_HAVE_STRLCPY", "1");
             build.define("ZMQ_HAVE_UIO", "1");
             build.define("ZMQ_HAVE_IPC", "1");
+        }
+
+        // https://github.com/jean-airoldie/zeromq-src-rs/issues/28
+        #[cfg(target_env = "gnu")]
+        if glibc::GlibcVersion::from_libc().has_strlcpy() {
+            build.define("ZMQ_HAVE_STRLCPY", "1");
         }
 
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
