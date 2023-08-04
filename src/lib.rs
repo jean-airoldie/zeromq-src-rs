@@ -61,12 +61,12 @@ mod glibc {
     use std::{cmp, ffi::CStr, num, str};
 
     #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-    pub(crate) struct GlibcVersion {
+    pub(crate) struct Version {
         major: u16,
         minor: u16,
     }
 
-    impl Ord for GlibcVersion {
+    impl Ord for Version {
         fn cmp(&self, other: &Self) -> cmp::Ordering {
             match self.major.cmp(&other.major) {
                 cmp::Ordering::Greater => return cmp::Ordering::Greater,
@@ -77,13 +77,13 @@ mod glibc {
         }
     }
 
-    impl PartialOrd for GlibcVersion {
+    impl PartialOrd for Version {
         fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
             Some(self.cmp(other))
         }
     }
 
-    impl GlibcVersion {
+    impl Version {
         #[inline]
         const fn new(major: u16, minor: u16) -> Self {
             Self { major, minor }
@@ -109,7 +109,7 @@ mod glibc {
             //     from OpenBSD, and are expected to be added to a future POSIX version.
             //
             // https://sourceware.org/pipermail/libc-alpha/2023-July/150524.html
-            self >= GlibcVersion::new(2, 38)
+            self >= Version::new(2, 38)
         }
     }
 
@@ -122,7 +122,7 @@ mod glibc {
         }
     }
 
-    impl str::FromStr for GlibcVersion {
+    impl str::FromStr for Version {
         type Err = BadVersion;
         fn from_str(s: &str) -> Result<Self, BadVersion> {
             let mut iter = s.split('.');
@@ -475,7 +475,7 @@ impl Build {
 
         // https://github.com/jean-airoldie/zeromq-src-rs/issues/28
         #[cfg(target_env = "gnu")]
-        if glibc::GlibcVersion::from_libc().has_strlcpy() {
+        if glibc::Version::from_libc().has_strlcpy() {
             build.define("ZMQ_HAVE_STRLCPY", "1");
         }
 
