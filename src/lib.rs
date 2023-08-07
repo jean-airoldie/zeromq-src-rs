@@ -62,6 +62,9 @@ mod glibc {
     // library to determine whether glibc packages it.
     pub(crate) fn has_strlcpy() -> bool {
         let mut build = cc::Build::new();
+        build.cargo_metadata(false);
+        build.warnings_into_errors(true);
+
         build.include("src/strlcpy.c");
         build.try_compile("has_strlcpy").is_ok()
     }
