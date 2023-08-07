@@ -58,105 +58,12 @@ where
 
 #[cfg(target_env = "gnu")]
 mod glibc {
-    use std::{cmp, env, ffi::CStr, num, path::PathBuf, str};
-
-    #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-    pub(crate) struct Version {
-        major: u16,
-        minor: u16,
-    }
-
-    impl Ord for Version {
-        fn cmp(&self, other: &Self) -> cmp::Ordering {
-            match self.major.cmp(&other.major) {
-                cmp::Ordering::Greater => return cmp::Ordering::Greater,
-                cmp::Ordering::Less => return cmp::Ordering::Less,
-                cmp::Ordering::Equal => (),
-            }
-            self.minor.cmp(&other.minor)
-        }
-    }
-
-    impl PartialOrd for Version {
-        fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-            Some(self.cmp(other))
-        }
-    }
-
-    impl Version {
-        #[inline]
-        const fn new(major: u16, minor: u16) -> Self {
-            Self { major, minor }
-        }
-
-        pub(crate) fn from_libc() -> Self {
-            // SAFETY Call to libc via ffi.
-            let ptr = unsafe { libc::gnu_get_libc_version() };
-
-            // SAFETY We're reading a static c string via ffi.
-            let cstr = unsafe { CStr::from_ptr(ptr) };
-            let string = cstr.to_str().expect("expected UTF8 string");
-            match string.parse() {
-                Ok(version) => version,
-                Err(_) => {
-                    panic!("unable to parse glibc version, expect MAJOR.MINOR.PATCH, got {}", string);
-                }
-            }
-        }
-
-        pub(crate) fn has_strlcpy(self) -> bool {
-            // > * The strlcpy and strlcat functions have been added.  They are derived
-            //     from OpenBSD, and are expected to be added to a future POSIX version.
-            //
-            // https://sourceware.org/pipermail/libc-alpha/2023-July/150524.html
-            self >= Version::new(2, 38)
-        }
-    }
-
-    #[derive(Debug)]
-    pub(crate) struct BadVersion(());
-
-    impl From<num::ParseIntError> for BadVersion {
-        fn from(_: num::ParseIntError) -> Self {
-            Self(())
-        }
-    }
-
-    impl str::FromStr for Version {
-        type Err = BadVersion;
-        fn from_str(s: &str) -> Result<Self, BadVersion> {
-            let mut iter = s.split('.');
-            let major = iter.next().ok_or(BadVersion(()))?.parse()?;
-            let minor = iter.next().ok_or(BadVersion(()))?.parse()?;
-
-            Ok(Self { major, minor })
-        }
-    }
-
     // Attempt to compile a c program that links to strlcpy from the std
     // library to determine whether glibc packages it.
-    pub(crate) fn can_link_strlcpy() -> bool {
+    pub(crate) fn has_strlcpy() -> bool {
         let mut build = cc::Build::new();
         build.include("src/strlcpy.c");
-
-        let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-        build.out_dir(&out_dir);
-
         build.try_compile("has_strlcpy").is_ok()
-    }
-
-    pub(crate) fn has_strlcpy() -> bool {
-        // Check if the libc is linked statically.
-        // https://rust-lang.github.io/rfcs/1721-crt-static.html
-        let target = env::var("CARGO_CFG_TARGET_FEATURE").unwrap();
-
-        if target.contains("crt-static") {
-            // We link statically against glibc, therefore host and target libc
-            // version will match.
-            Version::from_libc().has_strlcpy()
-        } else {
-            can_link_strlcpy()
-        }
     }
 }
 
