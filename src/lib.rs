@@ -150,7 +150,7 @@ mod glibc {
         // https://rust-lang.github.io/rfcs/1721-crt-static.html
         let target = env::var("CARGO_CFG_TARGET_FEATURE").unwrap();
 
-        if target.contains("ctr-static") {
+        if target.contains("crt-static") {
             // We link statically against glibc, therefore host and target libc
             // version will match.
             Version::from_libc().has_strlcpy()
