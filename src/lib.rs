@@ -65,7 +65,7 @@ mod glibc {
         build.cargo_metadata(false);
         build.warnings_into_errors(true);
 
-        build.include("src/strlcpy.c");
+        build.file("src/strlcpy.c");
         build.try_compile("has_strlcpy").is_ok()
     }
 }
