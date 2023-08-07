@@ -58,7 +58,7 @@ where
 
 #[cfg(target_env = "gnu")]
 mod glibc {
-    use std::{cmp, ffi::CStr, num, str};
+    use std::{cmp, env, ffi::CStr, num, path::PathBuf, str};
 
     #[derive(Debug, Eq, PartialEq, Copy, Clone)]
     pub(crate) struct Version {
@@ -130,6 +130,32 @@ mod glibc {
             let minor = iter.next().ok_or(BadVersion(()))?.parse()?;
 
             Ok(Self { major, minor })
+        }
+    }
+
+    // Attempt to compile a c program that links to strlcpy from the std
+    // library to determine whether glibc packages it.
+    pub(crate) fn can_link_strlcpy() -> bool {
+        let mut build = cc::Build::new();
+        build.include("src/strlcpy.c");
+
+        let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+        build.out_dir(&out_dir);
+
+        build.try_compile("has_strlcpy").is_ok()
+    }
+
+    pub(crate) fn has_strlcpy() -> bool {
+        // Check if the libc is linked statically.
+        // https://rust-lang.github.io/rfcs/1721-crt-static.html
+        let target = env::var("CARGO_CFG_TARGET_FEATURE").unwrap();
+
+        if target.contains("ctr-static") {
+            // We link statically against glibc, therefore host and target libc
+            // version will match.
+            Version::from_libc().has_strlcpy()
+        } else {
+            can_link_strlcpy()
         }
     }
 }
@@ -475,7 +501,7 @@ impl Build {
 
         // https://github.com/jean-airoldie/zeromq-src-rs/issues/28
         #[cfg(target_env = "gnu")]
-        if glibc::Version::from_libc().has_strlcpy() {
+        if glibc::has_strlcpy() {
             build.define("ZMQ_HAVE_STRLCPY", "1");
         }
 
