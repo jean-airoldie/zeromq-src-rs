@@ -349,6 +349,7 @@ impl Build {
             build.include(out_includes);
         };
 
+        let mut has_strlcpy = false;
         if target.contains("windows") {
             // on windows vista and up we can use `epoll` through the `wepoll` lib
             add_c_sources(
@@ -390,28 +391,31 @@ impl Build {
             build.define("ZMQ_HAVE_UIO", "1");
 
             if target.contains("android") {
-                build.define("ZMQ_HAVE_STRLCPY", "1");
+                has_strlcpy = true;
             }
 
             if target.contains("musl") {
-                build.define("ZMQ_HAVE_STRLCPY", "1");
+                has_strlcpy = true;
             }
         } else if target.contains("apple") {
             create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_KQUEUE", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("HAVE_STRNLEN", "1");
-            build.define("ZMQ_HAVE_STRLCPY", "1");
             build.define("ZMQ_HAVE_UIO", "1");
             build.define("ZMQ_HAVE_IPC", "1");
+            has_strlcpy = true;
         }
 
         // https://github.com/jean-airoldie/zeromq-src-rs/issues/28
         #[cfg(target_env = "gnu")]
-        if glibc::has_strlcpy() {
-            build.define("ZMQ_HAVE_STRLCPY", "1");
+        if !has_strlcpy && glibc::has_strlcpy() {
+            has_strlcpy = true;
         }
 
+        if has_strlcpy {
+            build.define("ZMQ_HAVE_STRLCPY", "1");
+        }
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let lib_dir = out_dir.join("lib");
 
