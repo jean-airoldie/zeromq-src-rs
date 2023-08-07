@@ -58,15 +58,19 @@ where
 
 #[cfg(target_env = "gnu")]
 mod glibc {
+    use std::path::Path;
+
     // Attempt to compile a c program that links to strlcpy from the std
     // library to determine whether glibc packages it.
     pub(crate) fn has_strlcpy() -> bool {
-        let mut build = cc::Build::new();
-        build.cargo_metadata(false);
-        build.warnings_into_errors(true);
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/strlcpy.c");
 
-        build.file("src/strlcpy.c");
-        build.try_compile("has_strlcpy").is_ok()
+        cc::Build::new()
+            .cargo_metadata(false)
+            .warnings_into_errors(true)
+            .file(path)
+            .try_compile("has_strlcpy")
+            .is_ok()
     }
 }
 
