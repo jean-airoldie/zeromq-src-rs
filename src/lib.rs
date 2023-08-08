@@ -321,7 +321,7 @@ impl Build {
             println!("cargo:rustc-link-search={:?}", libsodium.lib_dir());
 
             if target.contains("msvc") {
-                std::fs::copy(
+                fs::copy(
                     libsodium
                         .include_dir()
                         .join("../../../builds/msvc/version.h"),
@@ -341,7 +341,7 @@ impl Build {
             // https://cmake.org/cmake/help/latest/command/configure_file.html
             // TODO: Replace `#cmakedefine` with the appropriate `#define`
             // let _platform_file =
-            //     std::fs::read_to_string(path.join("builds/cmake/platform.hpp.in"))
+            //     fs::read_to_string(path.join("builds/cmake/platform.hpp.in"))
             //         .unwrap();
 
             let out_includes = PathBuf::from(std::env::var("OUT_DIR").unwrap());
