@@ -60,8 +60,10 @@ where
 mod glibc {
     use std::path::Path;
 
-    // Attempt to compile a c program that links to strlcpy from the std
-    // library to determine whether glibc packages it.
+    // Attempt to compile a c program that refers to strlcpy from the std
+    // library to determine whether glibc packages it. If the function
+    // declaration cannot be found, a warning, escallated into an error,
+    // is emmited.
     pub(crate) fn has_strlcpy() -> bool {
         let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/strlcpy.c");
 
