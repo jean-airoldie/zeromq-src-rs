@@ -58,7 +58,10 @@ where
 
 #[cfg(target_env = "gnu")]
 mod glibc {
-    use std::{path::{Path, PathBuf}, env};
+    use std::{
+        env,
+        path::{Path, PathBuf},
+    };
 
     // Attempt to compile a c program that links to strlcpy from the std
     // library to determine whether glibc packages it.
