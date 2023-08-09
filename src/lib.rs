@@ -58,21 +58,27 @@ where
 
 #[cfg(target_env = "gnu")]
 mod glibc {
-    use std::path::Path;
+    use std::{path::{Path, PathBuf}, env};
 
-    // Attempt to compile a c program that refers to strlcpy from the std
-    // library to determine whether glibc packages it. If the function
-    // declaration cannot be found, a warning, escallated into an error,
-    // is emmited.
+    // Attempt to compile a c program that links to strlcpy from the std
+    // library to determine whether glibc packages it.
     pub(crate) fn has_strlcpy() -> bool {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/strlcpy.c");
+        let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/strlcpy.c");
+        println!("cargo:rerun-if-changed={}", src.display());
+
+        let dest =
+            PathBuf::from(env::var("OUT_DIR").unwrap()).join("has_strlcpy");
 
         cc::Build::new()
-            .cargo_metadata(false)
-            .warnings_into_errors(true)
-            .file(path)
-            .try_compile("has_strlcpy")
-            .is_ok()
+            .warnings(false)
+            .get_compiler()
+            .to_command()
+            .arg(src)
+            .arg("-o")
+            .arg(dest)
+            .status()
+            .expect("failed to execute gcc")
+            .success()
     }
 }
 
