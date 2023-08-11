@@ -1,6 +1,6 @@
 use std::{
-    env, fs,
-    fs::File,
+    env,
+    fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
 };
@@ -54,6 +54,35 @@ where
     }
 
     Err(())
+}
+
+#[cfg(target_env = "gnu")]
+mod glibc {
+    use std::{
+        env,
+        path::{Path, PathBuf},
+    };
+
+    // Attempt to compile a c program that links to strlcpy from the std
+    // library to determine whether glibc packages it.
+    pub(crate) fn has_strlcpy() -> bool {
+        let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/strlcpy.c");
+        println!("cargo:rerun-if-changed={}", src.display());
+
+        let dest =
+            PathBuf::from(env::var("OUT_DIR").unwrap()).join("has_strlcpy");
+
+        cc::Build::new()
+            .warnings(false)
+            .get_compiler()
+            .to_command()
+            .arg(src)
+            .arg("-o")
+            .arg(dest)
+            .status()
+            .expect("failed to execute gcc")
+            .success()
+    }
 }
 
 /// The location of a library.
@@ -303,7 +332,7 @@ impl Build {
             println!("cargo:rustc-link-search={:?}", libsodium.lib_dir());
 
             if target.contains("msvc") {
-                std::fs::copy(
+                fs::copy(
                     libsodium
                         .include_dir()
                         .join("../../../builds/msvc/version.h"),
@@ -323,7 +352,7 @@ impl Build {
             // https://cmake.org/cmake/help/latest/command/configure_file.html
             // TODO: Replace `#cmakedefine` with the appropriate `#define`
             // let _platform_file =
-            //     std::fs::read_to_string(path.join("builds/cmake/platform.hpp.in"))
+            //     fs::read_to_string(path.join("builds/cmake/platform.hpp.in"))
             //         .unwrap();
 
             let out_includes = PathBuf::from(std::env::var("OUT_DIR").unwrap());
@@ -338,6 +367,7 @@ impl Build {
             build.include(out_includes);
         };
 
+        let mut has_strlcpy = false;
         if target.contains("windows") {
             // on windows vista and up we can use `epoll` through the `wepoll` lib
             add_c_sources(
@@ -379,22 +409,31 @@ impl Build {
             build.define("ZMQ_HAVE_UIO", "1");
 
             if target.contains("android") {
-                build.define("ZMQ_HAVE_STRLCPY", "1");
+                has_strlcpy = true;
             }
 
             if target.contains("musl") {
-                build.define("ZMQ_HAVE_STRLCPY", "1");
+                has_strlcpy = true;
             }
         } else if target.contains("apple") {
             create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_KQUEUE", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("HAVE_STRNLEN", "1");
-            build.define("ZMQ_HAVE_STRLCPY", "1");
             build.define("ZMQ_HAVE_UIO", "1");
             build.define("ZMQ_HAVE_IPC", "1");
+            has_strlcpy = true;
         }
 
+        // https://github.com/jean-airoldie/zeromq-src-rs/issues/28
+        #[cfg(target_env = "gnu")]
+        if !has_strlcpy && glibc::has_strlcpy() {
+            has_strlcpy = true;
+        }
+
+        if has_strlcpy {
+            build.define("ZMQ_HAVE_STRLCPY", "1");
+        }
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let lib_dir = out_dir.join("lib");
 
