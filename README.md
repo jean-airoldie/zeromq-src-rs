@@ -23,7 +23,7 @@ See [`testcrate-static`](testcrate-static) for a usage example.
     will take the form of `VERSION+BUILD_METADATA`.
 
 # License
-While [`libzmq`] is license under `LGPL`, is has a linking exception, which means that this crate does not need to conform to the usual `LGPL` conditions. Indeed this crate does not modify the source code in any way and simply allows linking to `libzmq`. To quote from the [`zeromq website`]:
+While [`libzmq`] is license under `LGPL`, it has a linking exception, which means that this crate does not need to conform to the usual `LGPL` conditions. Indeed this crate does not modify the source code in any way and simply allows linking to `libzmq`. To quote from the [`zeromq website`]:
 > ZeroMQ is safe for use in close-source applications. The LGPL share-alike terms do not apply to applications built on top of ZeroMQ.
 > You do not need a commercial license. The LGPL applies to ZeroMQ's own source code, not your applications. Many commercial applications use ZeroMQ.
 
