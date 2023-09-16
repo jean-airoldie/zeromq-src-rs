@@ -56,7 +56,6 @@ where
     Err(())
 }
 
-#[cfg(target_env = "gnu")]
 mod glibc {
     use std::{
         env,
@@ -426,8 +425,10 @@ impl Build {
         }
 
         // https://github.com/jean-airoldie/zeromq-src-rs/issues/28
-        #[cfg(target_env = "gnu")]
-        if !has_strlcpy && glibc::has_strlcpy() {
+        if env::var("CARGO_CFG_TARGET_ENV").unwrap() == "gnu"
+            && !has_strlcpy
+            && glibc::has_strlcpy()
+        {
             has_strlcpy = true;
         }
 
