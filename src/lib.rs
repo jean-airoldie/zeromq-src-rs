@@ -410,6 +410,7 @@ impl Build {
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
 
+            #[cfg(windows)]
             if windows::has_sockaddr_un() {
                 build.define("ZMQ_HAVE_STRUCT_SOCKADDR_UN", "1");
             }
