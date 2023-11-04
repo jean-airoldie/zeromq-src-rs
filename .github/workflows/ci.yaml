@@ -17,13 +17,12 @@ jobs:
       # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
       - uses: actions/cache@v3
         with:
-        path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: ~/.cargo/bin/
+              ~/.cargo/registry/index/
+              ~/.cargo/registry/cache/
+              ~/.cargo/git/db/
+              target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v2
         with:
           toolchain: ${{ matrix.rust }}
@@ -60,12 +59,12 @@ jobs:
       # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
       - uses: actions/cache@v3
         with:
-        path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
+          path: ~/.cargo/bin/
+              ~/.cargo/registry/index/
+              ~/.cargo/registry/cache/
+              ~/.cargo/git/db/
+              target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Cargo test
         uses: actions-rs/cargo@v1
         with:
