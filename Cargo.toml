@@ -20,8 +20,3 @@ dircpy = "0.3.8"
 
 [dev-dependencies]
 testcrate = { path = "./testcrate", features = ["libsodium"] }
-
-# Properly display visual studio error messages.
-# https://github.com/pyca/cryptography/issues/9746#issuecomment-1775911491
-[target.'cfg(windows)'.env]
-VSLANG = "1033"
