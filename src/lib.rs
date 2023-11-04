@@ -85,36 +85,6 @@ mod glibc {
     }
 }
 
-#[cfg(windows)]
-mod windows {
-    use std::{
-        env,
-        path::{Path, PathBuf},
-    };
-
-    // Attempt to compile a c program that links to sockaddr_un to determine
-    // if the OS packages it.
-    pub(crate) fn has_sockaddr_un() -> bool {
-        let src =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/sockaddr_un.c");
-        println!("cargo:rerun-if-changed={}", src.display());
-
-        let dest =
-            PathBuf::from(env::var("OUT_DIR").unwrap()).join("has_sockaddr_un");
-
-        cc::Build::new()
-            .warnings(false)
-            .get_compiler()
-            .to_command()
-            .arg(src)
-            .arg("-o")
-            .arg(dest)
-            .status()
-            .expect("failed to execute gcc")
-            .success()
-    }
-}
-
 /// The location of a library.
 #[derive(Debug, Clone)]
 pub struct LibLocation {
@@ -409,11 +379,7 @@ impl Build {
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
-
-            #[cfg(windows)]
-            if windows::has_sockaddr_un() {
-                build.define("ZMQ_HAVE_STRUCT_SOCKADDR_UN", "1");
-            }
+            build.define("ZMQ_HAVE_STRUCT_SOCKADDR_UN", "1");
 
             println!("cargo:rustc-link-lib=iphlpapi");
 
