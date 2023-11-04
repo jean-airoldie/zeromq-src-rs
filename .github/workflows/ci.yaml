@@ -1,6 +1,9 @@
 on: [push, pull_request]
 
 name: Continuous integration
+env:
+  # Force Visual Studio compile errors to display in english
+  VSLANG: 1033
 
 jobs:
   check:
