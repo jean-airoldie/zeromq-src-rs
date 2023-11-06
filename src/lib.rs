@@ -378,6 +378,7 @@ impl Build {
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
+            build.define("ZMQ_HAVE_STRUCT_SOCKADDR_UN", "1");
 
             println!("cargo:rustc-link-lib=iphlpapi");
 
@@ -406,6 +407,7 @@ impl Build {
 
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_UIO", "1");
+            build.define("ZMQ_HAVE_STRUCT_SOCKADDR_UN", "1");
 
             if target.contains("android") {
                 has_strlcpy = true;
@@ -421,6 +423,7 @@ impl Build {
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_UIO", "1");
             build.define("ZMQ_HAVE_IPC", "1");
+            build.define("ZMQ_HAVE_STRUCT_SOCKADDR_UN", "1");
             has_strlcpy = true;
         }
 
@@ -474,7 +477,7 @@ mod test {
     fn version_works() {
         let version = testcrate::version();
         println!("{:?}", version);
-        assert_eq!(version, (4, 3, 4));
+        assert_eq!(version, (4, 3, 5));
     }
 
     #[test]

@@ -1,6 +1,9 @@
 on: [push, pull_request]
 
 name: Continuous integration
+env:
+  # Force Visual Studio compile errors to display in english
+  VSLANG: 1033
 
 jobs:
   check:
@@ -11,19 +14,18 @@ jobs:
         rust: [stable]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: actions/cache@v2
-        # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
+      # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
+      - uses: actions/cache@v3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          path: ~/.cargo/bin/
+              ~/.cargo/registry/index/
+              ~/.cargo/registry/cache/
+              ~/.cargo/git/db/
+              target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
@@ -54,19 +56,18 @@ jobs:
         tests: ["", "--release", "--features=libsodium"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: actions/cache@v2
-        # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
+      # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
+      - uses: actions/cache@v3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          path: ~/.cargo/bin/
+              ~/.cargo/registry/index/
+              ~/.cargo/registry/cache/
+              ~/.cargo/git/db/
+              target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Cargo test
         uses: actions-rs/cargo@v1
         with:
