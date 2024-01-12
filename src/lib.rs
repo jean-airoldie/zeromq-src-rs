@@ -416,7 +416,7 @@ impl Build {
             if target.contains("musl") {
                 has_strlcpy = true;
             }
-        } else if target.contains("apple") {
+        } else if target.contains("apple") || target.contains("freebsd") {
             create_platform_hpp_shim(&mut build);
             build.define("ZMQ_IOTHREAD_POLLER_USE_KQUEUE", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
