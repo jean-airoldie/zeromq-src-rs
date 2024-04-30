@@ -328,7 +328,10 @@ impl Build {
             build.define("ZMQ_HAVE_CURVE", "1");
 
             build.include(libsodium.include_dir());
-            println!("cargo:rustc-link-search={:?}", libsodium.lib_dir());
+            println!(
+                "cargo:rustc-link-search={}",
+                libsodium.lib_dir().to_string_lossy().to_string()
+            );
 
             if target.contains("msvc") {
                 fs::copy(
