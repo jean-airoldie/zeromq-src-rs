@@ -329,7 +329,7 @@ impl Build {
 
             build.include(libsodium.include_dir());
             println!(
-                "cargo:rustc-link-search={:?}",
+                "cargo:rustc-link-search={}",
                 libsodium.lib_dir().display()
             );
 
