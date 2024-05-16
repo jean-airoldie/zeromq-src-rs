@@ -6,6 +6,7 @@ edition = "2018"
 
 [features]
 libsodium = ['libsodium-sys-stable']
+libpgm = []
 
 [dependencies]
 libsodium-sys-stable = { version = "1.0", optional = true }
