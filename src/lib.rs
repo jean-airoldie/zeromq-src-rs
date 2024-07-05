@@ -445,6 +445,7 @@ impl Build {
         let lib_dir = out_dir.join("lib");
 
         build.out_dir(&lib_dir);
+        build.std("c++98");
         build.compile("zmq");
 
         // On windows we need to rename the static compiled lib
