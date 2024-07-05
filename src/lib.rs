@@ -73,6 +73,9 @@ mod glibc {
 
         cc::Build::new()
             .warnings(false)
+            .extra_warnings(false)
+            .cargo_warnings(false)
+            .cargo_metadata(false)
             .get_compiler()
             .to_command()
             .arg(src)
