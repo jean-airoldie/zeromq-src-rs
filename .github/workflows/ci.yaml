@@ -69,6 +69,7 @@ jobs:
               target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Cargo test
+        if: ${{ always() }} # prevent skipping CI on failure
         uses: actions-rs/cargo@v1
         with:
           command: test
