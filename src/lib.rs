@@ -84,6 +84,36 @@ mod glibc {
     }
 }
 
+mod cxx11 {
+    use std::{
+        env,
+        path::{Path, PathBuf},
+    };
+
+    // Attempt to compile a c program that links has the c++11 flag to determine
+    // whether it is supported.
+    pub(crate) fn has_cxx11() -> bool {
+        let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/trivial.c");
+        println!("cargo:rerun-if-changed={}", src.display());
+
+        let dest =
+            PathBuf::from(env::var("OUT_DIR").unwrap()).join("has_cxx11");
+
+        cc::Build::new()
+            .warnings(true)
+            .warnings_into_errors(true)
+            .std("c++11")
+            .get_compiler()
+            .to_command()
+            .arg(src)
+            .arg("-o")
+            .arg(dest)
+            .status()
+            .expect("failed to execute gcc")
+            .success()
+    }
+}
+
 /// The location of a library.
 #[derive(Debug, Clone)]
 pub struct LibLocation {
@@ -441,6 +471,16 @@ impl Build {
         if has_strlcpy {
             build.define("ZMQ_HAVE_STRLCPY", "1");
         }
+
+        // MSVC does not support c++11, since c++14 is the minimum.
+        if !target.contains("msvc") {
+            // Enable c++11 if possible to fix issue 45
+            // (https://github.com/jean-airoldie/zeromq-src-rs/issues/45).
+            if cxx11::has_cxx11() {
+                build.std("c++11");
+            }
+        }
+
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let lib_dir = out_dir.join("lib");
 
