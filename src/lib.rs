@@ -100,6 +100,7 @@ mod cxx11 {
             PathBuf::from(env::var("OUT_DIR").unwrap()).join("has_cxx11");
 
         cc::Build::new()
+            .cpp(true)
             .warnings(true)
             .warnings_into_errors(true)
             .std("c++11")
