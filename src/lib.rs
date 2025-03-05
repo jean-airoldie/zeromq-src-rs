@@ -334,22 +334,6 @@ impl Build {
             );
 
             if target.contains("msvc") {
-                let src = libsodium
-                    .include_dir()
-                    .join("../../../builds/msvc/version.h");
-                if let Err(err) = fs::copy(
-                    &src,
-                    libsodium.include_dir().join("sodium/version.h"),
-                ) {
-                    panic!(
-                        "could not copy from file at {}: {}",
-                        src.display(),
-                        err
-                    );
-                }
-            }
-
-            if target.contains("msvc") {
                 println!("cargo:rustc-link-lib=static=libsodium");
             } else {
                 println!("cargo:rustc-link-lib=static=sodium");
