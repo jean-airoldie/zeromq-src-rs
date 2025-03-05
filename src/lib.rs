@@ -1,7 +1,7 @@
 use std::{
     env,
-    fs::{self, File},
-    io::Write,
+    fs,
+    io::{Write, self},
     path::{Path, PathBuf},
 };
 
@@ -334,6 +334,24 @@ impl Build {
             );
 
             if target.contains("msvc") {
+                let dst = libsodium.include_dir().join("sodium/version.h");
+                if let Err(err) = fs::File::open(&dst) {
+                    match err.kind() {
+                        io::ErrorKind::NotFound => {
+                            fs::copy(
+                                libsodium
+                                    .include_dir()
+                                    .join("../../../builds/msvc/version.h"),
+                                dst,
+                            )
+                            .unwrap();
+                        }
+                        other => panic!("error reading file at {}: {}", dst.display(), other),
+                    }
+                }
+            }
+
+            if target.contains("msvc") {
                 println!("cargo:rustc-link-lib=static=libsodium");
             } else {
                 println!("cargo:rustc-link-lib=static=sodium");
@@ -352,7 +370,7 @@ impl Build {
             // Write out an empty platform file: defines will be set through cc directly,
             // sync to prevent potential IO troubles later on
             let mut f =
-                File::create(out_includes.join("platform.hpp")).unwrap();
+                fs::File::create(out_includes.join("platform.hpp")).unwrap();
             f.write_all(b"").unwrap();
             f.sync_all().unwrap();
 
