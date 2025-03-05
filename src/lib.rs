@@ -333,23 +333,38 @@ impl Build {
             );
 
             if target.contains("msvc") {
+                // Check if the version file is missing.
                 let dst = libsodium.include_dir().join("sodium/version.h");
                 if let Err(err) = fs::File::open(&dst) {
                     match err.kind() {
-                        io::ErrorKind::NotFound => {
-                            fs::copy(
-                                libsodium
-                                    .include_dir()
-                                    .join("../../../builds/msvc/version.h"),
-                                dst,
-                            )
-                            .unwrap();
-                        }
+                        io::ErrorKind::NotFound => (),
                         other => panic!(
                             "error reading file at {}: {}",
                             dst.display(),
                             other
                         ),
+                    }
+
+                    // We try to copy it from the build.
+                    let src = libsodium
+                        .include_dir()
+                        .join("../../../builds/msvc/version.h");
+                    if let Err(err) = fs::copy(&src, &dst) {
+                        match err.kind() {
+                            io::ErrorKind::NotFound => {
+                                // This might be a preinstalled binary, so we
+                                // copy it from somewhere else.
+                                panic!(
+                                    "could not find version.h at {}",
+                                    dst.display()
+                                );
+                            }
+                            other => panic!(
+                                "error reading file at {}: {}",
+                                src.display(),
+                                other
+                            ),
+                        }
                     }
                 }
             }
