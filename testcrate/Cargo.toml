@@ -12,3 +12,7 @@ libsodium-sys-stable = { version = "1.0", optional = true }
 
 [build-dependencies]
 zeromq-src = { path = ".." }
+
+[patch.crates-io]
+libsodium-sys-stable = { optional = true, git = "https://github.com/jean-airoldie/libsodium-sys-stable", branch = "issue_20" }
+
