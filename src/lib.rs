@@ -341,7 +341,11 @@ impl Build {
                     &src,
                     libsodium.include_dir().join("sodium/version.h"),
                 ) {
-                    panic!("could not copy from file at {}: {}", src.display(), err);
+                    panic!(
+                        "could not copy from file at {}: {}",
+                        src.display(),
+                        err
+                    );
                 }
             }
 
