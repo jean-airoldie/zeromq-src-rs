@@ -378,6 +378,7 @@ impl Build {
                 &["wepoll.c"],
             );
 
+            build.define("ZMQ_HAVE_WINDOWS", "1");
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
@@ -404,6 +405,7 @@ impl Build {
             }
         } else if target.contains("linux") {
             create_platform_hpp_shim(&mut build);
+            build.define("ZMQ_HAVE_LINUX", "1");
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("ZMQ_HAVE_IPC", "1");
