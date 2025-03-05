@@ -1,7 +1,6 @@
 use std::{
-    env,
-    fs,
-    io::{Write, self},
+    env, fs,
+    io::{self, Write},
     path::{Path, PathBuf},
 };
 
@@ -346,7 +345,11 @@ impl Build {
                             )
                             .unwrap();
                         }
-                        other => panic!("error reading file at {}: {}", dst.display(), other),
+                        other => panic!(
+                            "error reading file at {}: {}",
+                            dst.display(),
+                            other
+                        ),
                     }
                 }
             }
