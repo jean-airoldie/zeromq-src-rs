@@ -354,10 +354,21 @@ impl Build {
                             io::ErrorKind::NotFound => {
                                 // This might be a preinstalled binary, so we
                                 // copy it from somewhere else.
-                                panic!(
-                                    "could not find version.h at {}",
-                                    dst.display()
+                                println!(
+                                    "cargo:warning=printing content of include_dir"
                                 );
+                                for result in walkdir::WalkDir::new(
+                                    libsodium.include_dir(),
+                                )
+                                .into_iter()
+                                {
+                                    let entry = result.unwrap();
+                                    println!(
+                                        "cargo:warning={}",
+                                        entry.path().display()
+                                    );
+                                }
+                                panic!();
                             }
                             other => panic!(
                                 "error reading file at {}: {}",
