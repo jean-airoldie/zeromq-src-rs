@@ -334,13 +334,15 @@ impl Build {
             );
 
             if target.contains("msvc") {
-                fs::copy(
-                    libsodium
-                        .include_dir()
-                        .join("../../../builds/msvc/version.h"),
+                let src = libsodium
+                    .include_dir()
+                    .join("../../../builds/msvc/version.h");
+                if let Err(err) = fs::copy(
+                    &src,
                     libsodium.include_dir().join("sodium/version.h"),
-                )
-                .unwrap();
+                ) {
+                    panic!("could not copy from file at {}: {}", src.display(), err);
+                }
             }
 
             if target.contains("msvc") {
