@@ -349,34 +349,7 @@ impl Build {
                     let src = libsodium
                         .include_dir()
                         .join("../../../builds/msvc/version.h");
-                    if let Err(err) = fs::copy(&src, &dst) {
-                        match err.kind() {
-                            io::ErrorKind::NotFound => {
-                                // This might be a preinstalled binary, so we
-                                // copy it from somewhere else.
-                                println!(
-                                    "cargo:warning=printing content of include_dir"
-                                );
-                                for result in walkdir::WalkDir::new(
-                                    libsodium.include_dir(),
-                                )
-                                .into_iter()
-                                {
-                                    let entry = result.unwrap();
-                                    println!(
-                                        "cargo:warning={}",
-                                        entry.path().display()
-                                    );
-                                }
-                                panic!();
-                            }
-                            other => panic!(
-                                "error reading file at {}: {}",
-                                src.display(),
-                                other
-                            ),
-                        }
-                    }
+                    fs::copy(&src, &dst).unwrap();
                 }
             }
 
