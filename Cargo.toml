@@ -20,3 +20,7 @@ dircpy = "0.3.8"
 
 [dev-dependencies]
 testcrate = { path = "./testcrate", features = ["libsodium"] }
+
+[patch.crates-io]
+libsodium-sys-stable = { optional = true, git = "https://github.com/jean-airoldie/libsodium-sys-stable", branch = "issue_20" }
+
