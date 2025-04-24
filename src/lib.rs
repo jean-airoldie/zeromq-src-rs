@@ -17,7 +17,7 @@ fn add_cpp_sources(
         p
     }));
 
-    build.cpp(true).include(root);
+    build.include(root);
 }
 
 fn add_c_sources(
@@ -26,13 +26,16 @@ fn add_c_sources(
     files: &[&str],
 ) {
     let root = root.as_ref();
+    // Temporarily use c instead of c++.
+    build.cpp(false);
     build.files(files.iter().map(|src| {
         let mut p = root.join(src);
         p.set_extension("c");
         p
     }));
 
-    build.cpp(false).include(root);
+    build.include(root);
+    build.cpp(true);
 }
 
 // Returns Ok(()) is file was renamed,
@@ -209,6 +212,8 @@ impl Build {
 
         let mut build = cc::Build::new();
         build
+            // We use c++ as the default.
+            .cpp(true)
             .define("ZMQ_BUILD_TESTS", "OFF")
             .include(vendor.join("include"))
             .include(vendor.join("src"));
