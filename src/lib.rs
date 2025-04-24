@@ -17,7 +17,7 @@ fn add_cpp_sources(
         p
     }));
 
-    build.include(root);
+    build.cpp(true).include(root);
 }
 
 fn add_c_sources(
@@ -32,7 +32,7 @@ fn add_c_sources(
         p
     }));
 
-    build.include(root);
+    build.cpp(false).include(root);
 }
 
 // Returns Ok(()) is file was renamed,
@@ -209,7 +209,6 @@ impl Build {
 
         let mut build = cc::Build::new();
         build
-            .cpp(true)
             .define("ZMQ_BUILD_TESTS", "OFF")
             .include(vendor.join("include"))
             .include(vendor.join("src"));
@@ -403,12 +402,14 @@ impl Build {
         let mut has_strlcpy = false;
         if target.contains("windows") {
             // on windows vista and up we can use `epoll` through the `wepoll` lib
+
             add_c_sources(
                 &mut build,
                 vendor.join("external/wepoll"),
                 &["wepoll.c"],
             );
 
+            build.define("ZMQ_HAVE_WINDOWS", "1");
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("_WIN32_WINNT", "0x0600"); // vista
@@ -435,6 +436,7 @@ impl Build {
             }
         } else if target.contains("linux") {
             create_platform_hpp_shim(&mut build);
+            build.define("ZMQ_HAVE_LINUX", "1");
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("ZMQ_HAVE_IPC", "1");
