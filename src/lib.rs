@@ -470,10 +470,8 @@ impl Build {
                 build.define("_MSC_VER", "1");
             }
 
-            if !target.contains("uwp") {
-                if windows::has_icp_headers() {
-                    build.define("ZMQ_HAVE_IPC", "1");
-                }
+            if !target.contains("uwp") && windows::has_icp_headers() {
+                build.define("ZMQ_HAVE_IPC", "1");
             }
         } else if target.contains("linux") {
             create_platform_hpp_shim(&mut build);
