@@ -471,11 +471,9 @@ impl Build {
             }
 
             if !target.contains("uwp") {
-                let has_header = windows::has_icp_headers() as u32;
-                build.define(
-                    "ZMQ_HAVE_IPC",
-                    Some(has_header.to_string().as_ref()),
-                );
+                if windows::has_icp_headers() {
+                    build.define("ZMQ_HAVE_IPC", "1");
+                }
             }
         } else if target.contains("linux") {
             create_platform_hpp_shim(&mut build);
