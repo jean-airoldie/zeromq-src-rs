@@ -85,6 +85,35 @@ mod glibc {
             .expect("failed to execute gcc")
             .success()
     }
+
+}
+
+mod windows {
+    use std::{
+        env,
+        path::{Path, PathBuf},
+    };
+
+    // Attempt to compile a c program that links to winsock2.h & aflinux.h
+    // library to determine whether windows has these header files.
+    pub(crate) fn has_icp_headers() -> bool {
+        let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/windows_ipc.c");
+        println!("cargo:rerun-if-changed={}", src.display());
+
+        let dest =
+            PathBuf::from(env::var("OUT_DIR").unwrap()).join("has_windows_ipc_headers");
+
+        cc::Build::new()
+            .warnings(false)
+            .get_compiler()
+            .to_command()
+            .arg(src)
+            .arg("-o")
+            .arg(dest)
+            .status()
+            .expect("failed to execute gcc")
+            .success()
+    }
 }
 
 mod cxx11 {
@@ -442,7 +471,8 @@ impl Build {
             }
 
             if !target.contains("uwp") {
-                build.define("ZMQ_HAVE_IPC", "1");
+                let has_header = windows::has_icp_headers() as u32;
+                build.define("ZMQ_HAVE_IPC", Some(has_header.to_string().as_ref()));
             }
         } else if target.contains("linux") {
             create_platform_hpp_shim(&mut build);
