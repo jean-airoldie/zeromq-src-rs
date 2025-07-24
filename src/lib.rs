@@ -434,6 +434,11 @@ impl Build {
             } else {
                 create_platform_hpp_shim(&mut build);
                 build.define("HAVE_STRNLEN", "1");
+                // Older libzmq versions use _MSC_VER instead of ZMQ_HAVE_WINDOWS,
+                // even though it is a msvc specific variable. We set it to 1,
+                // the lowest possible version, on GNU so that boolean ifdef
+                // checks succeeds, but specific version checks fail.
+                build.define("_MSC_VER", "1");
             }
 
             if !target.contains("uwp") {
