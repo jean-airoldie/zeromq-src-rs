@@ -277,6 +277,9 @@ impl Build {
                 "io_thread",
                 "ip_resolver",
                 "ip",
+                "ipc_address",
+                "ipc_connecter",
+                "ipc_listener",
                 "kqueue",
                 "lb",
                 "mailbox_safe",
@@ -431,7 +434,6 @@ impl Build {
         };
 
         let mut has_strlcpy = false;
-        let mut has_ipc = false;
         if target.contains("windows") {
             // on windows vista and up we can use `epoll` through the `wepoll` lib
 
@@ -469,10 +471,10 @@ impl Build {
             }
 
             if !target.contains("uwp") {
-                has_ipc = windows::has_icp_headers();
+                let has_header = windows::has_icp_headers() as u32;
                 build.define(
                     "ZMQ_HAVE_IPC",
-                    Some((has_ipc as u32).to_string().as_ref()),
+                    Some(has_header.to_string().as_ref()),
                 );
             }
         } else if target.contains("linux") {
@@ -481,7 +483,6 @@ impl Build {
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
             build.define("ZMQ_POLL_BASED_ON_POLL", "1");
             build.define("ZMQ_HAVE_IPC", "1");
-            has_ipc = true;
 
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_UIO", "1");
@@ -501,7 +502,6 @@ impl Build {
             build.define("HAVE_STRNLEN", "1");
             build.define("ZMQ_HAVE_UIO", "1");
             build.define("ZMQ_HAVE_IPC", "1");
-            has_ipc = true;
             build.define("ZMQ_HAVE_STRUCT_SOCKADDR_UN", "1");
             has_strlcpy = true;
         }
@@ -529,14 +529,6 @@ impl Build {
 
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let lib_dir = out_dir.join("lib");
-
-        if has_ipc {
-            add_cpp_sources(
-                &mut build,
-                vendor.join("src"),
-                &["ipc_address", "ipc_connecter", "ipc_listener"],
-            );
-        }
 
         build.out_dir(&lib_dir);
         build.compile("zmq");
