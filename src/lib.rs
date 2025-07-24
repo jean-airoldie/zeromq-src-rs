@@ -527,7 +527,7 @@ mod test {
     #[test]
     fn version_works() {
         let version = testcrate::version();
-        println!("{:?}", version);
+        println!("{version:?}");
         assert_eq!(version, (4, 3, 5));
     }
 
