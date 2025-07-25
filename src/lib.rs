@@ -87,6 +87,35 @@ mod glibc {
     }
 }
 
+mod windows {
+    use std::{
+        env,
+        path::{Path, PathBuf},
+    };
+
+    // Attempt to compile a c program that links to winsock2.h & aflinux.h
+    // library to determine whether windows has these header files.
+    pub(crate) fn has_icp_headers() -> bool {
+        let src =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("src/windows_ipc.c");
+        println!("cargo:rerun-if-changed={}", src.display());
+
+        let dest = PathBuf::from(env::var("OUT_DIR").unwrap())
+            .join("has_windows_ipc_headers");
+
+        cc::Build::new()
+            .warnings(false)
+            .get_compiler()
+            .to_command()
+            .arg(src)
+            .arg("-o")
+            .arg(dest)
+            .status()
+            .expect("failed to execute gcc")
+            .success()
+    }
+}
+
 mod cxx11 {
     use std::{
         env,
@@ -407,12 +436,13 @@ impl Build {
         let mut has_strlcpy = false;
         if target.contains("windows") {
             // on windows vista and up we can use `epoll` through the `wepoll` lib
-
-            add_c_sources(
-                &mut build,
-                vendor.join("external/wepoll"),
-                &["wepoll.c"],
-            );
+            if !target.contains("gnu") {
+                add_c_sources(
+                    &mut build,
+                    vendor.join("external/wepoll"),
+                    &["wepoll.c"],
+                );
+            }
 
             build.define("ZMQ_HAVE_WINDOWS", "1");
             build.define("ZMQ_IOTHREAD_POLLER_USE_EPOLL", "1");
@@ -436,7 +466,7 @@ impl Build {
                 build.define("HAVE_STRNLEN", "1");
             }
 
-            if !target.contains("uwp") {
+            if !target.contains("uwp") && windows::has_icp_headers() {
                 build.define("ZMQ_HAVE_IPC", "1");
             }
         } else if target.contains("linux") {
