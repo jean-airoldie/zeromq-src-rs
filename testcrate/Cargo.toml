@@ -6,6 +6,7 @@ edition = "2018"
 
 [features]
 libsodium = ['libsodium-sys-stable']
+libpgm = []
 
 [dependencies]
 # Windows link is broken on latest libsodium-sys-stable

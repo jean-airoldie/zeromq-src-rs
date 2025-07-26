@@ -184,6 +184,7 @@ pub struct Build {
     enable_draft: bool,
     build_debug: bool,
     libsodium: Option<LibLocation>,
+    libpgm: Option<LibLocation>,
 }
 
 impl Build {
@@ -193,6 +194,7 @@ impl Build {
             enable_draft: false,
             build_debug: false,
             libsodium: None,
+            libpgm: None,
         }
     }
 }
@@ -229,6 +231,17 @@ impl Build {
     /// [`links build metadata`]: https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
     pub fn with_libsodium(&mut self, maybe: Option<LibLocation>) -> &mut Self {
         self.libsodium = maybe;
+        self
+    }
+
+    /// Enable the OpenPGM feature and link against an external `libpgm` library.
+    ///
+    /// Users can link against an installed lib or another `sys` or `src` crate
+    /// that provides the lib.
+    ///
+    /// [`links build metadata`]: https://doc.rust-lang.org/cargo/reference/build-scripts.html#the-links-manifest-key
+    pub fn with_libpgm(&mut self, maybe: Option<LibLocation>) -> &mut Self {
+        self.libpgm = maybe;
         self
     }
 
@@ -411,6 +424,30 @@ impl Build {
                 println!("cargo:rustc-link-lib=static=libsodium");
             } else {
                 println!("cargo:rustc-link-lib=static=sodium");
+            }
+        }
+
+        if let Some(libpgm) = &self.libpgm {
+            build.define("ZMQ_HAVE_OPENPGM", "1");
+            build.define("HAVE_PGM", "1");
+
+            build.include(libpgm.include_dir());
+            println!("cargo:rustc-link-search={}", libpgm.lib_dir().to_str().unwrap());
+
+            if target.contains("msvc") {
+                fs::copy(
+                    libpgm
+                        .include_dir()
+                        .join("../../../builds/msvc/version.h"),
+                    libpgm.include_dir().join("pgm/version.h"),
+                )
+                .unwrap();
+            }
+
+            if target.contains("msvc") {
+                println!("cargo:rustc-link-lib=static=libpgm");
+            } else {
+                println!("cargo:rustc-link-lib=pgm");
             }
         }
 
