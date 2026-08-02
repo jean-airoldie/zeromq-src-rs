@@ -121,6 +121,28 @@ mod windows {
             .expect("failed to execute gcc")
             .success()
     }
+
+     // Attempt to compile a c program that links to epoll.h
+    // library to determine whether windows has these header files.
+    // If not, we will add the wepoll dependency later
+    pub(crate) fn has_epoll_headers() -> bool {
+        let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/epoll.c");
+        println!("cargo:rerun-if-changed={}", src.display());
+
+        let dest = PathBuf::from(env::var("OUT_DIR").unwrap())
+            .join("has_epoll_headers");
+
+        cc::Build::new()
+            .warnings(false)
+            .get_compiler()
+            .to_command()
+            .arg(src)
+            .arg("-o")
+            .arg(dest)
+            .status()
+            .expect("failed to execute gcc")
+            .success()
+    }
 }
 
 mod cxx11 {
@@ -442,8 +464,8 @@ impl Build {
 
         let mut has_strlcpy = false;
         if target.contains("windows") {
-            // on windows vista and up we can use `epoll` through the `wepoll` lib
-            if !target.contains("gnu") {
+            // if epoll is not found, use wepoll
+            if !windows::has_epoll_headers() {
                 add_c_sources(
                     &mut build,
                     vendor.join("external/wepoll"),
